@@ -73,6 +73,10 @@ Effect language-service TypeScript patch during install because that patch is op
 the app and can spawn large Node processes when repeated across the monorepo. This keeps normal
 installs lighter, quieter, and less surprising.
 
+Only the dependency lifecycle scripts needed for core desktop functionality are trusted:
+`electron` downloads/unpacks the platform Electron binary, and `node-pty` builds the native terminal
+PTY dependency.
+
 For the most paranoid install mode, you can skip package lifecycle scripts:
 
 ```bash
