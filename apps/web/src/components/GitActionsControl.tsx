@@ -196,7 +196,7 @@ function GitActionItemIcon({ icon }: { icon: GitActionIconName }) {
 }
 
 function GitQuickActionIcon({ quickAction }: { quickAction: GitQuickAction }) {
-  const iconClassName = "size-3.5";
+  const iconClassName = "size-4";
   if (quickAction.kind === "open_pr") return <GitHubIcon className={iconClassName} />;
   if (quickAction.kind === "run_pull") return <InfoIcon className={iconClassName} />;
   if (quickAction.kind === "run_action") {
@@ -868,7 +868,7 @@ export default function GitActionsControl({
       {!isRepo ? (
         <Button
           variant="outline"
-          size="xs"
+          size="default"
           disabled={initMutation.isPending}
           onClick={() => initMutation.mutate()}
         >
@@ -884,13 +884,13 @@ export default function GitActionsControl({
                   <Button
                     aria-disabled="true"
                     className="cursor-not-allowed rounded-e-none border-e-0 opacity-64 before:rounded-e-none"
-                    size="xs"
+                    size="default"
                     variant="outline"
                   />
                 }
               >
                 <GitQuickActionIcon quickAction={quickAction} />
-                <span className="sr-only @3xl/header-actions:not-sr-only @3xl/header-actions:ml-0.5">
+                <span className="sr-only @2xl/header-actions:not-sr-only @2xl/header-actions:ml-0.5">
                   {quickAction.label}
                 </span>
               </PopoverTrigger>
@@ -901,12 +901,12 @@ export default function GitActionsControl({
           ) : (
             <Button
               variant="outline"
-              size="xs"
+              size="default"
               disabled={isGitActionRunning || quickAction.disabled}
               onClick={runQuickAction}
             >
               <GitQuickActionIcon quickAction={quickAction} />
-              <span className="sr-only @3xl/header-actions:not-sr-only @3xl/header-actions:ml-0.5">
+              <span className="sr-only @2xl/header-actions:not-sr-only @2xl/header-actions:ml-0.5">
                 {quickAction.label}
               </span>
             </Button>
@@ -923,7 +923,7 @@ export default function GitActionsControl({
             }}
           >
             <MenuTrigger
-              render={<Button aria-label="Git action options" size="icon-xs" variant="outline" />}
+              render={<Button aria-label="Git action options" size="icon" variant="outline" />}
               disabled={isGitActionRunning}
             >
               <ChevronDownIcon aria-hidden="true" className="size-4" />

@@ -1,4 +1,4 @@
-import { useEffect, type ReactNode } from "react";
+import { useEffect, type CSSProperties, type ReactNode } from "react";
 import { useNavigate } from "@tanstack/react-router";
 
 import ThreadSidebar from "./Sidebar";
@@ -9,7 +9,8 @@ import {
 } from "../shortcutModifierState";
 
 const THREAD_SIDEBAR_WIDTH_STORAGE_KEY = "chat_thread_sidebar_width";
-const THREAD_SIDEBAR_MIN_WIDTH = 13 * 16;
+const THREAD_SIDEBAR_DEFAULT_WIDTH = "18rem";
+const THREAD_SIDEBAR_MIN_WIDTH = 16 * 16;
 const THREAD_MAIN_CONTENT_MIN_WIDTH = 40 * 16;
 export function AppSidebarLayout({ children }: { children: ReactNode }) {
   const navigate = useNavigate();
@@ -54,7 +55,10 @@ export function AppSidebarLayout({ children }: { children: ReactNode }) {
   }, [navigate]);
 
   return (
-    <SidebarProvider defaultOpen>
+    <SidebarProvider
+      defaultOpen
+      style={{ "--sidebar-width": THREAD_SIDEBAR_DEFAULT_WIDTH } as CSSProperties}
+    >
       <Sidebar
         side="left"
         collapsible="offcanvas"

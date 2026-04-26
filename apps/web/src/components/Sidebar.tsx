@@ -535,7 +535,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
     >
       <SidebarMenuSubButton
         render={rowButtonRender}
-        size="sm"
+        size="md"
         isActive={isActive}
         data-testid={`thread-row-${thread.id}`}
         className={`${resolveThreadRowClassName({
@@ -546,7 +546,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
         onKeyDown={handleRowKeyDown}
         onContextMenu={handleRowContextMenu}
       >
-        <div className="flex min-w-0 flex-1 items-center gap-1.5 text-left">
+        <div className="flex min-w-0 flex-1 items-center gap-2 text-left">
           {prStatus && (
             <Tooltip>
               <TooltipTrigger
@@ -557,7 +557,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                     className={`inline-flex items-center justify-center ${prStatus.colorClass} cursor-pointer rounded-sm outline-hidden focus-visible:ring-1 focus-visible:ring-ring`}
                     onClick={handlePrClick}
                   >
-                    <GitPullRequestIcon className="size-3" />
+                    <GitPullRequestIcon className="size-3.5" />
                   </button>
                 }
               />
@@ -568,7 +568,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
           {renamingThreadKey === threadKey ? (
             <input
               ref={handleRenameInputRef}
-              className="min-w-0 flex-1 truncate text-xs bg-transparent outline-none border border-ring rounded px-0.5"
+              className="min-w-0 flex-1 truncate rounded border border-ring bg-transparent px-1 text-sm outline-none"
               value={renamingTitle}
               onChange={handleRenameInputChange}
               onKeyDown={handleRenameInputKeyDown}
@@ -580,7 +580,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
               <TooltipTrigger
                 render={
                   <span
-                    className="min-w-0 flex-1 truncate text-xs"
+                    className="min-w-0 flex-1 truncate text-sm"
                     data-testid={`thread-title-${thread.id}`}
                   >
                     {thread.title}
@@ -601,10 +601,10 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
               title={terminalStatus.label}
               className={`inline-flex items-center justify-center ${terminalStatus.colorClass}`}
             >
-              <TerminalIcon className={`size-3 ${terminalStatus.pulse ? "animate-pulse" : ""}`} />
+              <TerminalIcon className={`size-3.5 ${terminalStatus.pulse ? "animate-pulse" : ""}`} />
             </span>
           )}
-          <div className="flex min-w-12 justify-end">
+          <div className="flex min-w-14 justify-end">
             {isConfirmingArchive ? (
               <button
                 ref={handleConfirmArchiveRef}
@@ -612,7 +612,7 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                 data-thread-selection-safe
                 data-testid={`thread-archive-confirm-${thread.id}`}
                 aria-label={`Confirm archive ${thread.title}`}
-                className="absolute top-1/2 right-1 inline-flex h-5 -translate-y-1/2 cursor-pointer items-center rounded-full bg-destructive/12 px-2 text-[10px] font-medium text-destructive transition-colors hover:bg-destructive/18 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-destructive/40"
+                className="absolute top-1/2 right-1 inline-flex h-6 -translate-y-1/2 cursor-pointer items-center rounded-full border border-destructive/30 bg-destructive/12 px-2.5 text-xs font-medium text-destructive transition-colors hover:bg-destructive/18 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-destructive/40"
                 onPointerDown={stopPropagationOnPointerDown}
                 onClick={handleConfirmArchiveClick}
               >
@@ -626,11 +626,11 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                     data-thread-selection-safe
                     data-testid={`thread-archive-${thread.id}`}
                     aria-label={`Archive ${thread.title}`}
-                    className="inline-flex size-5 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
+                    className="inline-flex size-6 cursor-pointer items-center justify-center rounded-md border border-border/60 bg-background/70 text-muted-foreground transition-colors hover:border-border hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
                     onPointerDown={stopPropagationOnPointerDown}
                     onClick={handleStartArchiveConfirmation}
                   >
-                    <ArchiveIcon className="size-3.5" />
+                    <ArchiveIcon className="size-4" />
                   </button>
                 </div>
               ) : (
@@ -643,11 +643,11 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                           data-thread-selection-safe
                           data-testid={`thread-archive-${thread.id}`}
                           aria-label={`Archive ${thread.title}`}
-                          className="inline-flex size-5 cursor-pointer items-center justify-center text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
+                          className="inline-flex size-6 cursor-pointer items-center justify-center rounded-md border border-border/60 bg-background/70 text-muted-foreground transition-colors hover:border-border hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
                           onPointerDown={stopPropagationOnPointerDown}
                           onClick={handleArchiveImmediateClick}
                         >
-                          <ArchiveIcon className="size-3.5" />
+                          <ArchiveIcon className="size-4" />
                         </button>
                       </div>
                     }
@@ -668,24 +668,24 @@ const SidebarThreadRow = memo(function SidebarThreadRow(props: SidebarThreadRowP
                         />
                       }
                     >
-                      <CloudIcon className="size-3 text-muted-foreground/40" />
+                      <CloudIcon className="size-3.5 text-muted-foreground/60" />
                     </TooltipTrigger>
                     <TooltipPopup side="top">{threadEnvironmentLabel}</TooltipPopup>
                   </Tooltip>
                 )}
                 {jumpLabel ? (
                   <span
-                    className="inline-flex h-5 items-center rounded-full border border-border/80 bg-background/90 px-1.5 font-mono text-[10px] font-medium tracking-tight text-foreground shadow-sm"
+                    className="inline-flex h-5 items-center rounded-full border border-border/80 bg-background/90 px-1.5 font-mono text-xs font-medium tracking-tight text-foreground shadow-sm"
                     title={jumpLabel}
                   >
                     {jumpLabel}
                   </span>
                 ) : (
                   <span
-                    className={`text-[10px] ${
+                    className={`text-xs ${
                       isHighlighted
                         ? "text-foreground/72 dark:text-foreground/82"
-                        : "text-muted-foreground/40"
+                        : "text-muted-foreground/60"
                     }`}
                   >
                     {formatRelativeTimeLabel(
@@ -793,13 +793,13 @@ const SidebarProjectThreadList = memo(function SidebarProjectThreadList(
   return (
     <SidebarMenuSub
       ref={attachThreadListAutoAnimateRef}
-      className="mx-1 my-0 w-full translate-x-0 gap-0.5 overflow-hidden px-1.5 py-0"
+      className="mx-1 my-1 w-full translate-x-0 gap-1 overflow-hidden px-1.5 py-0"
     >
       {shouldShowThreadPanel && showEmptyThreadState ? (
         <SidebarMenuSubItem className="w-full" data-thread-selection-safe>
           <div
             data-thread-selection-safe
-            className="flex h-6 w-full translate-x-0 items-center px-2 text-left text-[10px] text-muted-foreground/60"
+            className="flex h-7 w-full translate-x-0 items-center px-2.5 text-left text-xs text-muted-foreground"
           >
             <span>No threads yet</span>
           </div>
@@ -843,8 +843,8 @@ const SidebarProjectThreadList = memo(function SidebarProjectThreadList(
           <SidebarMenuSubButton
             render={showMoreButtonRender}
             data-thread-selection-safe
-            size="sm"
-            className="h-6 w-full translate-x-0 justify-start px-2 text-left text-[10px] text-muted-foreground/60 hover:bg-accent hover:text-muted-foreground/80"
+            size="md"
+            className="h-7 w-full translate-x-0 justify-start rounded-lg border border-transparent px-2.5 text-left text-xs text-muted-foreground hover:border-border/60 hover:bg-accent hover:text-foreground"
             onClick={() => {
               expandThreadListForProject(projectKey);
             }}
@@ -861,8 +861,8 @@ const SidebarProjectThreadList = memo(function SidebarProjectThreadList(
           <SidebarMenuSubButton
             render={showLessButtonRender}
             data-thread-selection-safe
-            size="sm"
-            className="h-6 w-full translate-x-0 justify-start px-2 text-left text-[10px] text-muted-foreground/60 hover:bg-accent hover:text-muted-foreground/80"
+            size="md"
+            className="h-7 w-full translate-x-0 justify-start rounded-lg border border-transparent px-2.5 text-left text-xs text-muted-foreground hover:border-border/60 hover:bg-accent hover:text-foreground"
             onClick={() => {
               collapseThreadListForProject(projectKey);
             }}
@@ -1948,8 +1948,8 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
       <div className="group/project-header relative">
         <SidebarMenuButton
           ref={isManualProjectSorting ? dragHandleProps?.setActivatorNodeRef : undefined}
-          size="sm"
-          className={`gap-2 px-2 py-1.5 text-left hover:bg-accent group-hover/project-header:bg-accent group-hover/project-header:text-sidebar-accent-foreground ${
+          size="default"
+          className={`h-10 gap-2.5 rounded-lg border border-border/55 bg-background/35 px-2.5 text-left hover:border-border/75 hover:bg-accent group-hover/project-header:border-border/75 group-hover/project-header:bg-accent group-hover/project-header:text-sidebar-accent-foreground ${
             isManualProjectSorting ? "cursor-grab active:cursor-grabbing" : "cursor-pointer"
           }`}
           {...(isManualProjectSorting && dragHandleProps ? dragHandleProps.attributes : {})}
@@ -1963,31 +1963,35 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
             <span
               aria-hidden="true"
               title={projectStatus.label}
-              className={`-ml-0.5 relative inline-flex size-3.5 shrink-0 items-center justify-center ${projectStatus.colorClass}`}
+              className={`-ml-0.5 relative inline-flex size-4 shrink-0 items-center justify-center ${projectStatus.colorClass}`}
             >
               <span className="absolute inset-0 flex items-center justify-center transition-opacity duration-150 group-hover/project-header:opacity-0">
                 <span
-                  className={`size-[9px] rounded-full ${projectStatus.dotClass} ${
+                  className={`size-2.5 rounded-full ${projectStatus.dotClass} ${
                     projectStatus.pulse ? "animate-pulse" : ""
                   }`}
                 />
               </span>
-              <ChevronRightIcon className="absolute inset-0 m-auto size-3.5 text-muted-foreground/70 opacity-0 transition-opacity duration-150 group-hover/project-header:opacity-100" />
+              <ChevronRightIcon className="absolute inset-0 m-auto size-4 text-muted-foreground opacity-0 transition-opacity duration-150 group-hover/project-header:opacity-100" />
             </span>
           ) : (
             <ChevronRightIcon
-              className={`-ml-0.5 size-3.5 shrink-0 text-muted-foreground/70 transition-transform duration-150 ${
+              className={`-ml-0.5 size-4 shrink-0 text-muted-foreground transition-transform duration-150 ${
                 projectExpanded ? "rotate-90" : ""
               }`}
             />
           )}
-          <ProjectFavicon environmentId={project.environmentId} cwd={project.cwd} />
+          <ProjectFavicon
+            environmentId={project.environmentId}
+            cwd={project.cwd}
+            className="size-4"
+          />
           <span className="flex min-w-0 flex-1 items-center gap-2">
-            <span className="truncate text-xs font-medium text-foreground/90">
+            <span className="truncate text-sm font-semibold text-foreground">
               {project.displayName}
             </span>
             {project.groupedProjectCount > 1 ? (
-              <span className="shrink-0 text-[10px] text-muted-foreground/60">
+              <span className="shrink-0 text-xs text-muted-foreground">
                 {project.groupedProjectCount} projects
               </span>
             ) : null}
@@ -2006,11 +2010,11 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
                       ? "Remote project"
                       : "Available in multiple environments"
                   }
-                  className="pointer-events-none absolute top-1 right-1.5 inline-flex size-5 items-center justify-center rounded-md text-muted-foreground/50 transition-opacity duration-150 group-hover/project-header:opacity-0 group-focus-within/project-header:opacity-0"
+                  className="pointer-events-none absolute top-1.5 right-1.5 inline-flex size-7 items-center justify-center rounded-lg border border-transparent text-muted-foreground transition-opacity duration-150 group-hover/project-header:opacity-0 group-focus-within/project-header:opacity-0"
                 />
               }
             >
-              <CloudIcon className="size-3" />
+              <CloudIcon className="size-4" />
             </TooltipTrigger>
             <TooltipPopup side="top">
               Remote environment: {project.remoteEnvironmentLabels.join(", ")}
@@ -2020,15 +2024,15 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
         <Tooltip>
           <TooltipTrigger
             render={
-              <div className="pointer-events-none absolute top-1 right-1.5 opacity-0 transition-opacity duration-150 group-hover/project-header:pointer-events-auto group-hover/project-header:opacity-100 group-focus-within/project-header:pointer-events-auto group-focus-within/project-header:opacity-100">
+              <div className="pointer-events-none absolute top-1.5 right-1.5 opacity-0 transition-opacity duration-150 group-hover/project-header:pointer-events-auto group-hover/project-header:opacity-100 group-focus-within/project-header:pointer-events-auto group-focus-within/project-header:opacity-100">
                 <button
                   type="button"
                   aria-label={`Create new thread in ${project.displayName}`}
                   data-testid="new-thread-button"
-                  className="inline-flex size-5 cursor-pointer items-center justify-center rounded-md text-muted-foreground/70 hover:bg-secondary hover:text-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
+                  className="inline-flex size-7 cursor-pointer items-center justify-center rounded-lg border border-border/70 bg-background/80 text-muted-foreground transition-colors hover:border-border hover:bg-secondary hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
                   onClick={handleCreateThreadClick}
                 >
-                  <SquarePenIcon className="size-3.5" />
+                  <SquarePenIcon className="size-4" />
                 </button>
               </div>
             }
@@ -2208,7 +2212,7 @@ function T3Wordmark() {
   return (
     <svg
       aria-label="T3"
-      className="h-2.5 w-auto shrink-0 text-foreground"
+      className="h-3.5 w-auto shrink-0 text-foreground"
       viewBox="15.5309 37 94.3941 56.96"
       xmlns="http://www.w3.org/2000/svg"
     >
@@ -2245,10 +2249,10 @@ function ProjectSortMenu({
       <Tooltip>
         <TooltipTrigger
           render={
-            <MenuTrigger className="inline-flex size-5 cursor-pointer items-center justify-center rounded-md text-muted-foreground/60 transition-colors hover:bg-accent hover:text-foreground" />
+            <MenuTrigger className="inline-flex size-7 cursor-pointer items-center justify-center rounded-lg border border-border/70 bg-background/55 text-muted-foreground transition-colors hover:border-border hover:bg-accent hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring" />
           }
         >
-          <ArrowUpDownIcon className="size-3.5" />
+          <ArrowUpDownIcon className="size-4" />
         </TooltipTrigger>
         <TooltipPopup side="right">Sort projects</TooltipPopup>
       </Tooltip>
@@ -2364,20 +2368,20 @@ const SidebarChromeHeader = memo(function SidebarChromeHeader({
 }) {
   const wordmark = (
     <div className="flex items-center gap-2">
-      <SidebarTrigger className="shrink-0 md:hidden" />
+      <SidebarTrigger className="size-9 shrink-0 md:hidden" />
       <Tooltip>
         <TooltipTrigger
           render={
             <Link
               aria-label="Go to threads"
-              className="ml-1 flex min-w-0 flex-1 cursor-pointer items-center gap-1 rounded-md outline-hidden ring-ring transition-colors hover:text-foreground focus-visible:ring-2"
+              className="ml-1 flex min-w-0 flex-1 cursor-pointer items-center gap-1.5 rounded-md outline-hidden ring-ring transition-colors hover:text-foreground focus-visible:ring-2"
               to="/"
             >
               <T3Wordmark />
-              <span className="truncate text-sm font-medium tracking-tight text-muted-foreground">
+              <span className="truncate text-base font-semibold tracking-tight text-foreground">
                 Code
               </span>
-              <span className="rounded-full bg-muted/50 px-1.5 py-0.5 text-[8px] font-medium uppercase tracking-[0.18em] text-muted-foreground/60">
+              <span className="rounded-full border border-border/70 bg-muted/70 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                 {APP_STAGE_LABEL}
               </span>
             </Link>
@@ -2391,11 +2395,11 @@ const SidebarChromeHeader = memo(function SidebarChromeHeader({
   );
 
   return isElectron ? (
-    <SidebarHeader className="drag-region h-[52px] flex-row items-center gap-2 px-4 py-0 pl-[90px] wco:h-[env(titlebar-area-height)] wco:pl-[calc(env(titlebar-area-x)+1em)]">
+    <SidebarHeader className="drag-region h-[60px] flex-row items-center gap-2 px-4 py-0 pl-[90px] wco:h-[env(titlebar-area-height)] wco:min-h-[60px] wco:pl-[calc(env(titlebar-area-x)+1em)]">
       {wordmark}
     </SidebarHeader>
   ) : (
-    <SidebarHeader className="gap-3 px-3 py-2 sm:gap-2.5 sm:px-4 sm:py-3">{wordmark}</SidebarHeader>
+    <SidebarHeader className="gap-3 px-3 py-3 sm:px-4">{wordmark}</SidebarHeader>
   );
 });
 
@@ -2406,17 +2410,17 @@ const SidebarChromeFooter = memo(function SidebarChromeFooter() {
   }, [navigate]);
 
   return (
-    <SidebarFooter className="p-2">
+    <SidebarFooter className="p-3">
       <SidebarUpdatePill />
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton
-            size="sm"
-            className="gap-2 px-2 py-1.5 text-muted-foreground/70 hover:bg-accent hover:text-foreground"
+            size="default"
+            className="h-10 gap-2.5 rounded-lg border border-border/70 bg-background/45 px-3 text-foreground hover:border-border hover:bg-accent hover:text-foreground"
             onClick={handleSettingsClick}
           >
-            <SettingsIcon className="size-3.5" />
-            <span className="text-xs">Settings</span>
+            <SettingsIcon className="size-4" />
+            <span className="text-sm font-medium">Settings</span>
           </SidebarMenuButton>
         </SidebarMenuItem>
       </SidebarMenu>
@@ -2522,22 +2526,22 @@ const SidebarProjectsContent = memo(function SidebarProjectsContent(
 
   return (
     <SidebarContent className="gap-0">
-      <SidebarGroup className="px-2 pt-2 pb-1">
+      <SidebarGroup className="px-3 pt-2 pb-1">
         <SidebarMenu>
           <SidebarMenuItem>
             <CommandDialogTrigger
               render={
                 <SidebarMenuButton
-                  size="sm"
-                  className="gap-2 px-2 py-1.5 text-muted-foreground/70 hover:bg-accent hover:text-foreground focus-visible:ring-0"
+                  size="default"
+                  className="h-10 gap-3 rounded-lg border border-border/70 bg-background/55 px-3 text-foreground shadow-xs/5 hover:border-border hover:bg-accent hover:text-foreground focus-visible:ring-2"
                   data-testid="command-palette-trigger"
                 />
               }
             >
-              <SearchIcon className="size-3.5" />
-              <span className="flex-1 truncate text-left text-xs">Search</span>
+              <SearchIcon className="size-4" />
+              <span className="flex-1 truncate text-left text-sm font-medium">Search</span>
               {commandPaletteShortcutLabel ? (
-                <Kbd className="h-4 min-w-0 rounded-sm px-1.5 text-[10px]">
+                <Kbd className="h-5 min-w-0 rounded-md px-1.5 text-xs">
                   {commandPaletteShortcutLabel}
                 </Kbd>
               ) : null}
@@ -2546,7 +2550,7 @@ const SidebarProjectsContent = memo(function SidebarProjectsContent(
         </SidebarMenu>
       </SidebarGroup>
       {showArm64IntelBuildWarning && arm64IntelBuildWarningDescription ? (
-        <SidebarGroup className="px-2 pt-2 pb-0">
+        <SidebarGroup className="px-3 pt-2 pb-0">
           <Alert variant="warning" className="rounded-2xl border-warning/40 bg-warning/8">
             <TriangleAlertIcon />
             <AlertTitle>Intel build on Apple Silicon</AlertTitle>
@@ -2568,9 +2572,9 @@ const SidebarProjectsContent = memo(function SidebarProjectsContent(
           </Alert>
         </SidebarGroup>
       ) : null}
-      <SidebarGroup className="px-2 py-2">
-        <div className="mb-1 flex items-center justify-between pl-2 pr-1.5">
-          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">
+      <SidebarGroup className="px-3 py-3">
+        <div className="mb-2 flex items-center justify-between pl-1.5 pr-0.5">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             Projects
           </span>
           <div className="flex items-center gap-1">
@@ -2589,12 +2593,12 @@ const SidebarProjectsContent = memo(function SidebarProjectsContent(
                     type="button"
                     aria-label="Add project"
                     data-testid="sidebar-add-project-trigger"
-                    className="inline-flex size-5 cursor-pointer items-center justify-center rounded-md text-muted-foreground/60 transition-colors hover:bg-accent hover:text-foreground"
+                    className="inline-flex size-7 cursor-pointer items-center justify-center rounded-lg border border-border/70 bg-background/55 text-muted-foreground transition-colors hover:border-border hover:bg-accent hover:text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
                     onClick={openAddProject}
                   />
                 }
               >
-                <PlusIcon className="size-3.5" />
+                <PlusIcon className="size-4" />
               </TooltipTrigger>
               <TooltipPopup side="right">Add project</TooltipPopup>
             </Tooltip>

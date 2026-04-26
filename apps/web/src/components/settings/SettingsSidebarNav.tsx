@@ -33,7 +33,7 @@ export function SettingsSidebarNav({ pathname }: { pathname: string }) {
   return (
     <>
       <SidebarContent className="overflow-x-hidden">
-        <SidebarGroup className="px-2 py-3">
+        <SidebarGroup className="px-3 py-3">
           <SidebarMenu>
             {SETTINGS_NAV_ITEMS.map((item) => {
               const Icon = item.icon;
@@ -41,12 +41,12 @@ export function SettingsSidebarNav({ pathname }: { pathname: string }) {
               return (
                 <SidebarMenuItem key={item.to}>
                   <SidebarMenuButton
-                    size="sm"
+                    size="default"
                     isActive={isActive}
                     className={
                       isActive
-                        ? "gap-2.5 px-2.5 py-2 text-left text-[13px] font-medium text-foreground"
-                        : "gap-2.5 px-2.5 py-2 text-left text-[13px] text-muted-foreground/70 hover:text-foreground/80"
+                        ? "h-10 gap-2.5 rounded-lg border border-border/70 bg-accent px-3 text-left text-sm font-medium text-foreground"
+                        : "h-10 gap-2.5 rounded-lg border border-border/55 bg-background/35 px-3 text-left text-sm text-muted-foreground hover:border-border/75 hover:bg-accent hover:text-foreground"
                     }
                     onClick={() => void navigate({ to: item.to, replace: true })}
                   >
@@ -67,12 +67,12 @@ export function SettingsSidebarNav({ pathname }: { pathname: string }) {
       </SidebarContent>
 
       <SidebarSeparator />
-      <SidebarFooter className="p-2">
+      <SidebarFooter className="p-3">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
-              size="sm"
-              className="gap-2 px-2 py-2 text-xs text-muted-foreground hover:bg-accent hover:text-foreground"
+              size="default"
+              className="h-10 gap-2 rounded-lg border border-border/70 bg-background/45 px-3 text-sm text-muted-foreground hover:bg-accent hover:text-foreground"
               onClick={() => window.history.back()}
             >
               <ArrowLeftIcon className="size-4" />

@@ -240,9 +240,7 @@ export const MessagesTimeline = memo(function MessagesTimeline({
   if (rows.length === 0 && !isWorking) {
     return (
       <div className="flex h-full items-center justify-center">
-        <p className="text-sm text-muted-foreground/30">
-          Send a message to start the conversation.
-        </p>
+        <p className="text-sm text-muted-foreground">Send a message to start the conversation.</p>
       </div>
     );
   }
@@ -395,7 +393,7 @@ function TimelineRowContent({ row }: { row: TimelineRow }) {
               {row.showCompletionDivider && (
                 <div className="my-3 flex items-center gap-3">
                   <span className="h-px flex-1 bg-border" />
-                  <span className="rounded-full border border-border bg-background px-2.5 py-1 text-[10px] uppercase tracking-[0.14em] text-muted-foreground/80">
+                  <span className="rounded-full border border-border bg-background px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-foreground">
                     {ctx.completionSummary ? `Response • ${ctx.completionSummary}` : "Response"}
                   </span>
                   <span className="h-px flex-1 bg-border" />
@@ -414,7 +412,7 @@ function TimelineRowContent({ row }: { row: TimelineRow }) {
                   onOpenTurnDiff={ctx.onOpenTurnDiff}
                 />
                 <div className="mt-1.5 flex items-center gap-2">
-                  <p className="text-[10px] text-muted-foreground/30">
+                  <p className="text-xs text-muted-foreground/80">
                     {row.message.streaming ? (
                       <LiveMessageMeta
                         createdAt={row.message.createdAt}
@@ -435,7 +433,7 @@ function TimelineRowContent({ row }: { row: TimelineRow }) {
                         text={assistantCopyState.text ?? ""}
                         size="icon-xs"
                         variant="outline"
-                        className="border-border/50 bg-background/35 text-muted-foreground/45 shadow-none hover:border-border/70 hover:bg-background/55 hover:text-muted-foreground/70"
+                        className="border-border/70 bg-background/60 text-muted-foreground/85 shadow-none hover:border-border hover:bg-background/80 hover:text-foreground"
                       />
                     </div>
                   ) : null}
@@ -458,11 +456,11 @@ function TimelineRowContent({ row }: { row: TimelineRow }) {
 
       {row.kind === "working" && (
         <div className="py-0.5 pl-1.5">
-          <div className="flex items-center gap-2 pt-1 text-[11px] text-muted-foreground/70">
+          <div className="flex items-center gap-2 pt-1 text-xs font-medium text-foreground/85">
             <span className="inline-flex items-center gap-[3px]">
-              <span className="h-1 w-1 rounded-full bg-muted-foreground/30 animate-pulse" />
-              <span className="h-1 w-1 rounded-full bg-muted-foreground/30 animate-pulse [animation-delay:200ms]" />
-              <span className="h-1 w-1 rounded-full bg-muted-foreground/30 animate-pulse [animation-delay:400ms]" />
+              <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/80 animate-pulse" />
+              <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/80 animate-pulse [animation-delay:200ms]" />
+              <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/80 animate-pulse [animation-delay:400ms]" />
             </span>
             <span>
               {row.createdAt ? (
@@ -542,16 +540,16 @@ const WorkGroupSection = memo(function WorkGroupSection({
   const groupLabel = onlyToolEntries ? "Tool calls" : "Work log";
 
   return (
-    <div className="rounded-xl border border-border/45 bg-card/25 px-2 py-1.5">
+    <div className="rounded-xl border border-border/75 bg-card/55 px-2.5 py-2">
       {showHeader && (
         <div className="mb-1.5 flex items-center justify-between gap-2 px-0.5">
-          <p className="text-[9px] uppercase tracking-[0.16em] text-muted-foreground/55">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/90">
             {groupLabel} ({groupedEntries.length})
           </p>
           {hasOverflow && (
             <button
               type="button"
-              className="text-[9px] uppercase tracking-[0.12em] text-muted-foreground/55 transition-colors duration-150 hover:text-foreground/75"
+              className="rounded-md border border-border/60 bg-background/50 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground transition-colors duration-150 hover:border-border hover:text-foreground"
               onClick={() => setIsExpanded((v) => !v)}
             >
               {isExpanded ? "Show less" : `Show ${hiddenCount} more`}
@@ -859,10 +857,10 @@ function workToneIcon(tone: TimelineWorkEntry["tone"]): {
 }
 
 function workToneClass(tone: "thinking" | "tool" | "info" | "error"): string {
-  if (tone === "error") return "text-rose-300/50 dark:text-rose-300/50";
-  if (tone === "tool") return "text-muted-foreground/70";
-  if (tone === "thinking") return "text-muted-foreground/50";
-  return "text-muted-foreground/40";
+  if (tone === "error") return "text-rose-300 dark:text-rose-200";
+  if (tone === "tool") return "text-foreground/92";
+  if (tone === "thinking") return "text-foreground/82";
+  return "text-foreground/88";
 }
 
 function workEntryPreview(
@@ -962,23 +960,17 @@ const SimpleWorkEntryRow = memo(function SimpleWorkEntryRow(props: {
           {rawCommand ? (
             <div className="max-w-full">
               <p
-                className={cn(
-                  "truncate text-xs leading-5",
-                  workToneClass(workEntry.tone),
-                  preview ? "text-muted-foreground/70" : "",
-                )}
+                className={cn("truncate text-xs leading-5", workToneClass(workEntry.tone))}
                 title={displayText}
               >
-                <span className={cn("text-foreground/80", workToneClass(workEntry.tone))}>
-                  {heading}
-                </span>
+                <span className={cn("font-medium", workToneClass(workEntry.tone))}>{heading}</span>
                 {preview && (
                   <Tooltip>
                     <TooltipTrigger
                       closeDelay={0}
                       delay={75}
                       render={
-                        <span className="max-w-full cursor-default text-muted-foreground/55 transition-colors hover:text-muted-foreground/75 focus-visible:text-muted-foreground/75">
+                        <span className="max-w-full cursor-default text-muted-foreground/85 transition-colors hover:text-foreground focus-visible:text-foreground">
                           {" "}
                           - {preview}
                         </span>
@@ -1004,17 +996,11 @@ const SimpleWorkEntryRow = memo(function SimpleWorkEntryRow(props: {
                 title={displayText}
                 aria-label={displayText}
               >
-                <p
-                  className={cn(
-                    "truncate text-[11px] leading-5",
-                    workToneClass(workEntry.tone),
-                    preview ? "text-muted-foreground/70" : "",
-                  )}
-                >
-                  <span className={cn("text-foreground/80", workToneClass(workEntry.tone))}>
+                <p className={cn("truncate text-xs leading-5", workToneClass(workEntry.tone))}>
+                  <span className={cn("font-medium", workToneClass(workEntry.tone))}>
                     {heading}
                   </span>
-                  {preview && <span className="text-muted-foreground/55"> - {preview}</span>}
+                  {preview && <span className="text-muted-foreground/85"> - {preview}</span>}
                 </p>
               </TooltipTrigger>
               <TooltipPopup className="max-w-[min(720px,calc(100vw-2rem))]">
@@ -1033,7 +1019,7 @@ const SimpleWorkEntryRow = memo(function SimpleWorkEntryRow(props: {
             return (
               <span
                 key={`${workEntry.id}:${filePath}`}
-                className="rounded-md border border-border/55 bg-background/75 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground/75"
+                className="rounded-md border border-border/70 bg-background/85 px-1.5 py-0.5 font-mono text-[10px] text-foreground/85"
                 title={displayPath}
               >
                 {displayPath}
@@ -1041,7 +1027,7 @@ const SimpleWorkEntryRow = memo(function SimpleWorkEntryRow(props: {
             );
           })}
           {(workEntry.changedFiles?.length ?? 0) > 4 && (
-            <span className="px-1 text-[10px] text-muted-foreground/55">
+            <span className="px-1 text-[10px] text-muted-foreground/85">
               +{(workEntry.changedFiles?.length ?? 0) - 4}
             </span>
           )}

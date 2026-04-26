@@ -3237,14 +3237,14 @@ export default function ChatView(props: ChatViewProps) {
       {/* Top bar */}
       <header
         className={cn(
-          "border-b border-border px-3 sm:px-5",
+          "border-b border-border px-4 sm:px-5",
           isElectron
             ? cn(
-                "drag-region flex h-[52px] items-center wco:h-[env(titlebar-area-height)]",
+                "drag-region flex h-[60px] items-center wco:h-[env(titlebar-area-height)] wco:min-h-[60px]",
                 reserveTitleBarControlInset &&
                   "wco:pr-[calc(100vw-env(titlebar-area-width)-env(titlebar-area-x)+1em)]",
               )
-            : "py-2 sm:py-3",
+            : "py-3",
         )}
       >
         <ChatHeader

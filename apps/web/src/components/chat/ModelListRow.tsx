@@ -34,7 +34,7 @@ export const ModelListRow = memo(function ModelListRow(props: {
       value={`${props.provider}:${props.model.slug}`}
       contentClassName="flex w-full items-start gap-2"
       className={cn(
-        "w-full cursor-pointer rounded px-3 py-2 transition-colors group",
+        "w-full cursor-pointer rounded px-3 py-2.5 transition-colors group",
         "data-highlighted:bg-muted data-selected:bg-accent data-selected:text-foreground",
       )}
     >
@@ -42,7 +42,7 @@ export const ModelListRow = memo(function ModelListRow(props: {
         <TooltipTrigger
           render={
             <button
-              className="mt-0.5 shrink-0 cursor-pointer opacity-40 transition-opacity group-hover:opacity-100"
+              className="mt-0.5 shrink-0 cursor-pointer opacity-75 transition-opacity group-hover:opacity-100"
               onClick={(event) => {
                 event.stopPropagation();
                 props.onToggleFavorite();
@@ -66,7 +66,7 @@ export const ModelListRow = memo(function ModelListRow(props: {
 
       <div className="min-w-0 flex-1 text-left">
         <div className="flex items-center justify-between gap-2 min-w-0">
-          <div className="text-xs font-medium leading-snug flex items-center gap-2 min-w-0">
+          <div className="text-sm font-semibold leading-snug flex items-center gap-2 min-w-0 text-foreground">
             <span className="truncate">
               {props.useTriggerLabel
                 ? getTriggerDisplayModelLabel(props.model)
@@ -92,8 +92,8 @@ export const ModelListRow = memo(function ModelListRow(props: {
         </div>
         {props.showProvider && (
           <div className="flex items-center gap-1 mt-0.5">
-            <ProviderIcon className="size-3 shrink-0" />
-            <span className="text-xs font-normal leading-snug text-muted-foreground/70 truncate">
+            <ProviderIcon className="size-3.5 shrink-0 text-muted-foreground/90" />
+            <span className="text-xs font-medium leading-snug text-muted-foreground/90 truncate">
               {getProviderLabel(props.provider, props.model)}
             </span>
           </div>

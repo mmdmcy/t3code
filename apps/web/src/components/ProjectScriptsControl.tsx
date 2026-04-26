@@ -65,7 +65,7 @@ const SCRIPT_ICONS: Array<{ id: ProjectScriptIcon; label: string }> = [
 
 function ScriptIcon({
   icon,
-  className = "size-3.5",
+  className = "size-4",
 }: {
   icon: ProjectScriptIcon;
   className?: string;
@@ -271,20 +271,20 @@ export default function ProjectScriptsControl({
       {primaryScript ? (
         <Group aria-label="Project scripts">
           <Button
-            size="xs"
+            size="default"
             variant="outline"
             onClick={() => onRunScript(primaryScript)}
             title={`Run ${primaryScript.name}`}
           >
             <ScriptIcon icon={primaryScript.icon} />
-            <span className="sr-only @3xl/header-actions:not-sr-only @3xl/header-actions:ml-0.5">
+            <span className="sr-only @2xl/header-actions:not-sr-only @2xl/header-actions:ml-0.5">
               {primaryScript.name}
             </span>
           </Button>
           <GroupSeparator className="hidden @3xl/header-actions:block" />
           <Menu highlightItemOnHover={false}>
             <MenuTrigger
-              render={<Button size="icon-xs" variant="outline" aria-label="Script actions" />}
+              render={<Button size="icon" variant="outline" aria-label="Script actions" />}
             >
               <ChevronDownIcon className="size-4" />
             </MenuTrigger>
@@ -340,9 +340,9 @@ export default function ProjectScriptsControl({
           </Menu>
         </Group>
       ) : (
-        <Button size="xs" variant="outline" onClick={openAddDialog} title="Add action">
-          <PlusIcon className="size-3.5" />
-          <span className="sr-only @3xl/header-actions:not-sr-only @3xl/header-actions:ml-0.5">
+        <Button size="default" variant="outline" onClick={openAddDialog} title="Add action">
+          <PlusIcon className="size-4" />
+          <span className="sr-only @2xl/header-actions:not-sr-only @2xl/header-actions:ml-0.5">
             Add action
           </span>
         </Button>

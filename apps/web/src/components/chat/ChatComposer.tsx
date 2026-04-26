@@ -81,7 +81,7 @@ import { basenameOfPath } from "../../vscode-icons";
 import { cn, randomUUID } from "~/lib/utils";
 import { Separator } from "../ui/separator";
 import { Button } from "../ui/button";
-import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "../ui/select";
+import { Select, SelectItem, SelectPopup, SelectTrigger } from "../ui/select";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
 import { toastManager } from "../ui/toast";
 import {
@@ -184,8 +184,8 @@ const ComposerFooterModeControls = memo(function ComposerFooterModeControls(prop
       {props.showInteractionModeToggle ? (
         <>
           <Button
-            variant="ghost"
-            className="shrink-0 whitespace-nowrap px-2 text-muted-foreground/70 hover:text-foreground/80 sm:px-3"
+            variant="outline"
+            className="shrink-0 whitespace-nowrap bg-background/55 px-2 text-foreground hover:bg-accent sm:px-3"
             size="sm"
             type="button"
             onClick={props.onToggleInteractionMode}
@@ -210,14 +210,14 @@ const ComposerFooterModeControls = memo(function ComposerFooterModeControls(prop
         onValueChange={(value) => props.onRuntimeModeChange(value!)}
       >
         <SelectTrigger
-          variant="ghost"
+          variant="default"
           size="sm"
-          className="font-medium"
+          className="w-max max-w-none min-w-max shrink-0 bg-background/55 px-2 font-medium text-foreground sm:px-3"
           aria-label="Runtime mode"
           title={runtimeModeOption.description}
         >
           <RuntimeModeIcon className="size-4" />
-          <SelectValue>{runtimeModeOption.label}</SelectValue>
+          <span className="whitespace-nowrap">{runtimeModeOption.label}</span>
         </SelectTrigger>
         <SelectPopup alignItemWithTrigger={false}>
           {runtimeModeOptions.map((mode) => {
@@ -227,10 +227,10 @@ const ComposerFooterModeControls = memo(function ComposerFooterModeControls(prop
               <SelectItem key={mode} value={mode} className="min-w-64 py-2">
                 <div className="grid min-w-0 gap-0.5">
                   <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
-                    <OptionIcon className="size-3.5 shrink-0 text-muted-foreground" />
+                    <OptionIcon className="size-3.5 shrink-0 text-foreground/85" />
                     {option.label}
                   </span>
-                  <span className="text-muted-foreground text-xs leading-4">
+                  <span className="text-muted-foreground/90 text-xs leading-4">
                     {option.description}
                   </span>
                 </div>
@@ -244,12 +244,12 @@ const ComposerFooterModeControls = memo(function ComposerFooterModeControls(prop
         <>
           <Separator orientation="vertical" className="mx-0.5 hidden h-4 sm:block" />
           <Button
-            variant="ghost"
+            variant="outline"
             className={cn(
-              "shrink-0 whitespace-nowrap px-2 sm:px-3",
+              "shrink-0 whitespace-nowrap bg-background/55 px-2 sm:px-3",
               props.planSidebarOpen
                 ? "text-blue-400 hover:text-blue-300"
-                : "text-muted-foreground/70 hover:text-foreground/80",
+                : "text-foreground hover:bg-accent hover:text-foreground",
             )}
             size="sm"
             type="button"
@@ -294,7 +294,7 @@ const ComposerFooterPrimaryActions = memo(function ComposerFooterPrimaryActions(
     <>
       {props.activeContextWindow ? <ContextWindowMeter usage={props.activeContextWindow} /> : null}
       {props.isPreparingWorktree ? (
-        <span className="text-muted-foreground/70 text-xs">Preparing worktree...</span>
+        <span className="text-muted-foreground/90 text-xs font-medium">Preparing worktree...</span>
       ) : null}
       <ComposerPrimaryActions
         compact={props.compact}

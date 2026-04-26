@@ -391,7 +391,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
     <TooltipProvider delay={0}>
       <div
         className={cn(
-          "relative flex h-screen max-h-96 w-screen max-w-100 overflow-hidden rounded-lg border bg-popover not-dark:bg-clip-padding text-popover-foreground shadow-lg/5 before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-lg)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)]",
+          "relative flex h-screen max-h-96 w-screen max-w-100 overflow-hidden rounded-lg border border-border bg-popover not-dark:bg-clip-padding text-popover-foreground shadow-lg/5 before:pointer-events-none before:absolute before:inset-0 before:rounded-[calc(var(--radius-lg)-1px)] before:shadow-[0_1px_--theme(--color-black/4%)] dark:before:shadow-[0_-1px_--theme(--color-white/6%)]",
           isLocked ? "flex-col" : "flex-row",
         )}
       >
@@ -448,7 +448,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
                 inputClassName="border-0 shadow-none ring-0 focus-visible:ring-0"
                 placeholder="Search models..."
                 showTrigger={false}
-                startAddon={<SearchIcon className="size-4 shrink-0 text-muted-foreground/50" />}
+                startAddon={<SearchIcon className="size-4 shrink-0 text-muted-foreground/90" />}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={(e) => {
@@ -482,7 +482,7 @@ export const ModelPickerContent = memo(function ModelPickerContent(props: {
             {/* Model list */}
             <div
               ref={listRegionRef}
-              className="relative min-h-0 flex-1 before:pointer-events-none before:absolute before:inset-0 before:bg-muted/40"
+              className="relative min-h-0 flex-1 before:pointer-events-none before:absolute before:inset-0 before:bg-muted/10"
             >
               <ComboboxList className="model-picker-list size-full divide-y px-2 py-1">
                 {filteredModelKeys.map((modelKey, index) => {

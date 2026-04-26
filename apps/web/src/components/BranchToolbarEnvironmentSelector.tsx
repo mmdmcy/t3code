@@ -41,11 +41,11 @@ export const BranchToolbarEnvironmentSelector = memo(function BranchToolbarEnvir
 
   if (envLocked) {
     return (
-      <span className="inline-flex items-center gap-1 border border-transparent px-[calc(--spacing(3)-1px)] text-sm font-medium text-muted-foreground/70 sm:text-xs">
+      <span className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-input bg-background/60 px-[calc(--spacing(3)-1px)] text-sm font-medium text-foreground">
         {activeEnvironment?.isPrimary ? (
-          <MonitorIcon className="size-3" />
+          <MonitorIcon className="size-4" />
         ) : (
-          <CloudIcon className="size-3" />
+          <CloudIcon className="size-4" />
         )}
         {activeEnvironment?.label ?? "Run on"}
       </span>
@@ -58,11 +58,11 @@ export const BranchToolbarEnvironmentSelector = memo(function BranchToolbarEnvir
       onValueChange={(value) => onEnvironmentChange(value as EnvironmentId)}
       items={environmentItems}
     >
-      <SelectTrigger variant="ghost" size="xs" className="font-medium" aria-label="Run on">
+      <SelectTrigger variant="default" size="default" className="font-medium" aria-label="Run on">
         {activeEnvironment?.isPrimary ? (
-          <MonitorIcon className="size-3" />
+          <MonitorIcon className="size-4" />
         ) : (
-          <CloudIcon className="size-3" />
+          <CloudIcon className="size-4" />
         )}
         <SelectValue />
       </SelectTrigger>

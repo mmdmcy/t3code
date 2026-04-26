@@ -29,7 +29,7 @@ export function ContextWindowMeter(props: { usage: ContextWindowSnapshot }) {
         render={
           <button
             type="button"
-            className="group inline-flex items-center justify-center rounded-full transition-opacity hover:opacity-85"
+            className="group inline-flex items-center justify-center rounded-full border border-border/70 bg-background/55 p-1 transition-opacity hover:bg-accent"
             aria-label={
               usage.maxTokens !== null && usedPercentage
                 ? `Context window ${usedPercentage} used`
@@ -65,8 +65,8 @@ export function ContextWindowMeter(props: { usage: ContextWindowSnapshot }) {
               </svg>
               <span
                 className={cn(
-                  "relative flex h-[15px] w-[15px] items-center justify-center rounded-full bg-background text-[8px] font-medium",
-                  "text-muted-foreground",
+                  "relative flex h-[15px] w-[15px] items-center justify-center rounded-full bg-background text-[8px] font-semibold",
+                  "text-foreground",
                 )}
               >
                 {usage.usedPercentage !== null
@@ -79,7 +79,7 @@ export function ContextWindowMeter(props: { usage: ContextWindowSnapshot }) {
       />
       <PopoverPopup tooltipStyle side="top" align="end" className="w-max max-w-none px-3 py-2">
         <div className="space-y-1.5 leading-tight">
-          <div className="text-[11px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/90">
             Context window
           </div>
           {usage.maxTokens !== null && usedPercentage ? (
@@ -97,13 +97,13 @@ export function ContextWindowMeter(props: { usage: ContextWindowSnapshot }) {
           )}
           {(usage.totalProcessedTokens ?? null) !== null &&
           (usage.totalProcessedTokens ?? 0) > usage.usedTokens ? (
-            <div className="text-xs text-muted-foreground">
+            <div className="text-xs text-muted-foreground/90">
               Total processed: {formatContextWindowTokens(usage.totalProcessedTokens ?? null)}{" "}
               tokens
             </div>
           ) : null}
           {usage.compactsAutomatically ? (
-            <div className="text-xs text-muted-foreground">
+            <div className="text-xs text-muted-foreground/90">
               Automatically compacts its context when needed.
             </div>
           ) : null}

@@ -30,8 +30,8 @@ export const CompactComposerControlsMenu = memo(function CompactComposerControls
         render={
           <Button
             size="sm"
-            variant="ghost"
-            className="shrink-0 px-2 text-muted-foreground/70 hover:text-foreground/80"
+            variant="outline"
+            className="shrink-0 bg-background/55 px-2 text-foreground hover:bg-accent hover:text-foreground"
             aria-label="More composer controls"
           />
         }

@@ -406,25 +406,24 @@ export const TraitsPicker = memo(function TraitsPicker({
         render={
           <Button
             size="sm"
-            variant={triggerVariant ?? "ghost"}
+            variant={triggerVariant ?? "outline"}
             className={cn(
-              isCodexStyle
-                ? "min-w-0 max-w-40 shrink justify-start overflow-hidden whitespace-nowrap px-2 text-muted-foreground/70 hover:text-foreground/80 sm:max-w-48 sm:px-3 [&_svg]:mx-0"
-                : "shrink-0 whitespace-nowrap px-2 text-muted-foreground/70 hover:text-foreground/80 sm:px-3",
+              "w-max max-w-none min-w-max shrink-0 whitespace-nowrap bg-background/55 px-2 text-foreground hover:bg-accent hover:text-foreground sm:px-3",
+              isCodexStyle ? "justify-start overflow-visible [&_svg]:mx-0" : undefined,
               triggerClassName,
             )}
           />
         }
       >
         {isCodexStyle ? (
-          <span className="flex min-w-0 w-full items-center gap-2 overflow-hidden">
+          <span className="flex min-w-max items-center gap-2 overflow-visible whitespace-nowrap">
             {triggerLabel}
-            <ChevronDownIcon aria-hidden="true" className="size-3 shrink-0 opacity-60" />
+            <ChevronDownIcon aria-hidden="true" className="size-3 shrink-0 opacity-80" />
           </span>
         ) : (
           <>
             <span>{triggerLabel}</span>
-            <ChevronDownIcon aria-hidden="true" className="size-3 opacity-60" />
+            <ChevronDownIcon aria-hidden="true" className="size-3 opacity-80" />
           </>
         )}
       </MenuTrigger>

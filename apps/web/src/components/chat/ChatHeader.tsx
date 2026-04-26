@@ -69,27 +69,27 @@ export const ChatHeader = memo(function ChatHeader({
   onToggleDiff,
 }: ChatHeaderProps) {
   return (
-    <div className="@container/header-actions flex min-w-0 flex-1 items-center gap-2">
-      <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden sm:gap-3">
-        <SidebarTrigger className="size-7 shrink-0 md:hidden" />
+    <div className="@container/header-actions flex min-w-0 flex-1 items-center gap-3">
+      <div className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden sm:gap-3">
+        <SidebarTrigger className="size-9 shrink-0 md:hidden" />
         <h2
-          className="min-w-0 shrink truncate text-sm font-medium text-foreground"
+          className="min-w-0 shrink truncate text-base font-semibold text-foreground"
           title={activeThreadTitle}
         >
           {activeThreadTitle}
         </h2>
         {activeProjectName && (
-          <Badge variant="outline" className="min-w-0 shrink overflow-hidden">
+          <Badge variant="outline" size="lg" className="min-w-0 shrink overflow-hidden">
             <span className="min-w-0 truncate">{activeProjectName}</span>
           </Badge>
         )}
         {activeProjectName && !isGitRepo && (
-          <Badge variant="outline" className="shrink-0 text-[10px] text-amber-700">
+          <Badge variant="outline" className="shrink-0 text-xs text-amber-700">
             No Git
           </Badge>
         )}
       </div>
-      <div className="flex shrink-0 items-center justify-end gap-2 @3xl/header-actions:gap-3">
+      <div className="flex shrink-0 items-center justify-end gap-2.5 @3xl/header-actions:gap-3">
         {activeProjectScripts && (
           <ProjectScriptsControl
             scripts={activeProjectScripts}
@@ -124,10 +124,10 @@ export const ChatHeader = memo(function ChatHeader({
                 onPressedChange={onToggleTerminal}
                 aria-label="Toggle terminal drawer"
                 variant="outline"
-                size="xs"
+                size="default"
                 disabled={!terminalAvailable}
               >
-                <TerminalSquareIcon className="size-3" />
+                <TerminalSquareIcon className="size-4" />
               </Toggle>
             }
           />
@@ -148,10 +148,10 @@ export const ChatHeader = memo(function ChatHeader({
                 onPressedChange={onToggleDiff}
                 aria-label="Toggle diff panel"
                 variant="outline"
-                size="xs"
+                size="default"
                 disabled={!isGitRepo}
               >
-                <DiffIcon className="size-3" />
+                <DiffIcon className="size-4" />
               </Toggle>
             }
           />

@@ -86,23 +86,17 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
         render={
           <Button
             size="sm"
-            variant={props.triggerVariant ?? "ghost"}
+            variant={props.triggerVariant ?? "outline"}
             data-chat-provider-model-picker="true"
             className={cn(
-              "min-w-0 justify-start overflow-hidden whitespace-nowrap px-2 text-muted-foreground/70 hover:text-foreground/80 [&_svg]:mx-0",
-              props.compact ? "max-w-42 shrink-0" : "max-w-48 shrink sm:max-w-56 sm:px-3",
+              "w-max max-w-none min-w-max shrink-0 justify-start overflow-visible whitespace-nowrap bg-background/55 px-2 text-foreground hover:bg-accent hover:text-foreground sm:px-3 [&_svg]:mx-0",
               props.triggerClassName,
             )}
             disabled={props.disabled}
           />
         }
       >
-        <span
-          className={cn(
-            "flex min-w-0 w-full box-border items-center gap-2 overflow-hidden",
-            props.compact ? "max-w-36 sm:pl-1" : undefined,
-          )}
-        >
+        <span className="flex min-w-max items-center gap-2 overflow-visible whitespace-nowrap">
           <ProviderIcon
             aria-hidden="true"
             className={cn("size-4 shrink-0", props.activeProviderIconClassName)}
@@ -112,21 +106,19 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
               render={
                 <span
                   className={cn(
-                    "min-w-0 flex-1 overflow-hidden",
-                    triggerSubtitle
-                      ? "grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-1"
-                      : "truncate",
+                    "min-w-max overflow-visible whitespace-nowrap",
+                    triggerSubtitle ? "inline-flex items-center gap-1" : undefined,
                   )}
                 />
               }
             >
               {triggerSubtitle ? (
                 <>
-                  <span className="min-w-0 truncate">{triggerSubtitle}</span>
-                  <span aria-hidden="true" className="shrink-0 opacity-60">
+                  <span>{triggerSubtitle}</span>
+                  <span aria-hidden="true" className="shrink-0 opacity-80">
                     ·
                   </span>
-                  <span className="min-w-0 truncate">{triggerTitle}</span>
+                  <span>{triggerTitle}</span>
                 </>
               ) : (
                 triggerTitle
@@ -134,7 +126,7 @@ export const ProviderModelPicker = memo(function ProviderModelPicker(props: {
             </TooltipTrigger>
             <TooltipPopup side="top">{triggerLabel}</TooltipPopup>
           </Tooltip>
-          <ChevronDownIcon aria-hidden="true" className="size-3 shrink-0 opacity-60" />
+          <ChevronDownIcon aria-hidden="true" className="size-3 shrink-0 opacity-80" />
         </span>
       </PopoverTrigger>
       <PopoverPopup

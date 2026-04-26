@@ -80,8 +80,8 @@ export const BranchToolbar = memo(function BranchToolbar({
   if (!hasActiveThread || !activeProject) return null;
 
   return (
-    <div className="mx-auto flex w-full max-w-208 items-center justify-between px-2.5 pb-3 pt-1 sm:px-3">
-      <div className="flex items-center gap-1">
+    <div className="mx-auto flex w-full max-w-224 items-center justify-between gap-3 px-3 pb-3.5 pt-2 sm:px-5">
+      <div className="flex items-center gap-2">
         {showEnvironmentPicker && (
           <>
             <BranchToolbarEnvironmentSelector
@@ -90,7 +90,7 @@ export const BranchToolbar = memo(function BranchToolbar({
               availableEnvironments={availableEnvironments}
               onEnvironmentChange={onEnvironmentChange}
             />
-            <Separator orientation="vertical" className="mx-0.5 h-3.5!" />
+            <Separator orientation="vertical" className="mx-0.5 h-5!" />
           </>
         )}
         <BranchToolbarEnvModeSelector
