@@ -16,6 +16,7 @@ import {
   Fiber,
   FileSystem,
   Option,
+  Path,
   PlatformError,
   Ref,
   Schedule,
@@ -217,7 +218,7 @@ const createManager = (
 ): Effect.Effect<
   ManagerFixture,
   PlatformError.PlatformError,
-  FileSystem.FileSystem | Scope.Scope
+  FileSystem.FileSystem | Path.Path | Scope.Scope
 > =>
   Effect.flatMap(Effect.service(FileSystem.FileSystem), (fs) =>
     Effect.gen(function* () {

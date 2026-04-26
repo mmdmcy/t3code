@@ -16,6 +16,7 @@ import {
   FileSystem,
   Layer,
   Option,
+  Path as EffectPath,
   Schema,
   Scope,
   Semaphore,
@@ -28,6 +29,7 @@ import {
   terminalRestartsTotal,
   terminalSessionsTotal,
 } from "../../observability/Metrics.ts";
+import { writeFileStringAtomically } from "../../atomicWrite.ts";
 import { runProcess } from "../../processRunner.ts";
 import {
   TerminalCwdError,
@@ -53,6 +55,11 @@ const DEFAULT_MAX_RETAINED_INACTIVE_SESSIONS = 128;
 const DEFAULT_OPEN_COLS = 120;
 const DEFAULT_OPEN_ROWS = 30;
 const TERMINAL_ENV_BLOCKLIST = new Set(["PORT", "ELECTRON_RENDERER_PORT", "ELECTRON_RUN_AS_NODE"]);
+
+function isTerminalHistoryPersistenceEnabled(): boolean {
+  const raw = process.env.T3CODE_TERMINAL_HISTORY_ENABLED?.trim().toLowerCase();
+  return raw === "1" || raw === "true" || raw === "yes";
+}
 
 class TerminalSubprocessCheckError extends Schema.TaggedErrorClass<TerminalSubprocessCheckError>()(
   "TerminalSubprocessCheckError",
@@ -692,6 +699,7 @@ function normalizedRuntimeEnv(
 interface TerminalManagerOptions {
   logsDir: string;
   historyLineLimit?: number;
+  historyPersistenceEnabled?: boolean;
   ptyAdapter: PtyAdapterShape;
   shellResolver?: () => string;
   platform?: NodeJS.Platform;
@@ -707,6 +715,7 @@ const makeTerminalManager = Effect.fn("makeTerminalManager")(function* () {
   const ptyAdapter = yield* PtyAdapter;
   return yield* makeTerminalManagerWithOptions({
     logsDir: terminalLogsDir,
+    historyPersistenceEnabled: isTerminalHistoryPersistenceEnabled(),
     ptyAdapter,
   });
 });
@@ -714,11 +723,13 @@ const makeTerminalManager = Effect.fn("makeTerminalManager")(function* () {
 export const makeTerminalManagerWithOptions = Effect.fn("makeTerminalManagerWithOptions")(
   function* (options: TerminalManagerOptions) {
     const fileSystem = yield* FileSystem.FileSystem;
+    const effectPath = yield* EffectPath.Path;
     const context = yield* Effect.context<never>();
     const runFork = Effect.runForkWith(context);
 
     const logsDir = options.logsDir;
     const historyLineLimit = options.historyLineLimit ?? DEFAULT_HISTORY_LINE_LIMIT;
+    const historyPersistenceEnabled = options.historyPersistenceEnabled ?? true;
     const platform = options.platform ?? process.platform;
     const baseEnv = options.env ?? process.env;
     const shellResolver = options.shellResolver ?? (() => defaultShellResolver(platform, baseEnv));
@@ -729,7 +740,9 @@ export const makeTerminalManagerWithOptions = Effect.fn("makeTerminalManagerWith
     const maxRetainedInactiveSessions =
       options.maxRetainedInactiveSessions ?? DEFAULT_MAX_RETAINED_INACTIVE_SESSIONS;
 
-    yield* fileSystem.makeDirectory(logsDir, { recursive: true }).pipe(Effect.orDie);
+    if (historyPersistenceEnabled) {
+      yield* fileSystem.makeDirectory(logsDir, { recursive: true }).pipe(Effect.orDie);
+    }
 
     const managerStateRef = yield* SynchronizedRef.make<TerminalManagerState>({
       sessions: new Map(),
@@ -757,6 +770,16 @@ export const makeTerminalManagerWithOptions = Effect.fn("makeTerminalManagerWith
 
     const legacyHistoryPath = (threadId: string) =>
       path.join(logsDir, `${legacySafeThreadId(threadId)}.log`);
+
+    const writeHistoryFile = (filePath: string, history: string) =>
+      writeFileStringAtomically({
+        filePath,
+        contents: history,
+        mode: 0o600,
+      }).pipe(
+        Effect.provideService(FileSystem.FileSystem, fileSystem),
+        Effect.provideService(EffectPath.Path, effectPath),
+      );
 
     const toTerminalHistoryError =
       (operation: "read" | "truncate" | "migrate", threadId: string, terminalId: string) =>
@@ -923,7 +946,11 @@ export const makeTerminalManagerWithOptions = Effect.fn("makeTerminalManagerWith
           return;
         }
 
-        yield* fileSystem.writeFileString(historyPath(threadId, terminalId), request.history).pipe(
+        if (!historyPersistenceEnabled) {
+          return;
+        }
+
+        yield* writeHistoryFile(historyPath(threadId, terminalId), request.history).pipe(
           Effect.catch((error) =>
             Effect.logWarning("failed to persist terminal history", {
               threadId,
@@ -940,6 +967,10 @@ export const makeTerminalManagerWithOptions = Effect.fn("makeTerminalManagerWith
       terminalId: string,
       history: string,
     ) {
+      if (!historyPersistenceEnabled) {
+        return;
+      }
+
       yield* persistWorker.enqueue(toSessionKey(threadId, terminalId), {
         history,
         immediate: false,
@@ -950,6 +981,10 @@ export const makeTerminalManagerWithOptions = Effect.fn("makeTerminalManagerWith
       threadId: string,
       terminalId: string,
     ) {
+      if (!historyPersistenceEnabled) {
+        return;
+      }
+
       yield* persistWorker.drainKey(toSessionKey(threadId, terminalId));
     });
 
@@ -958,6 +993,10 @@ export const makeTerminalManagerWithOptions = Effect.fn("makeTerminalManagerWith
       terminalId: string,
       history: string,
     ) {
+      if (!historyPersistenceEnabled) {
+        return;
+      }
+
       yield* persistWorker.enqueue(toSessionKey(threadId, terminalId), {
         history,
         immediate: true,
@@ -969,6 +1008,10 @@ export const makeTerminalManagerWithOptions = Effect.fn("makeTerminalManagerWith
       threadId: string,
       terminalId: string,
     ) {
+      if (!historyPersistenceEnabled) {
+        return "";
+      }
+
       const nextPath = historyPath(threadId, terminalId);
       if (
         yield* fileSystem
@@ -980,9 +1023,9 @@ export const makeTerminalManagerWithOptions = Effect.fn("makeTerminalManagerWith
           .pipe(Effect.mapError(toTerminalHistoryError("read", threadId, terminalId)));
         const capped = capHistory(raw, historyLineLimit);
         if (capped !== raw) {
-          yield* fileSystem
-            .writeFileString(nextPath, capped)
-            .pipe(Effect.mapError(toTerminalHistoryError("truncate", threadId, terminalId)));
+          yield* writeHistoryFile(nextPath, capped).pipe(
+            Effect.mapError(toTerminalHistoryError("truncate", threadId, terminalId)),
+          );
         }
         return capped;
       }
@@ -1004,9 +1047,9 @@ export const makeTerminalManagerWithOptions = Effect.fn("makeTerminalManagerWith
         .readFileString(legacyPath)
         .pipe(Effect.mapError(toTerminalHistoryError("migrate", threadId, terminalId)));
       const capped = capHistory(raw, historyLineLimit);
-      yield* fileSystem
-        .writeFileString(nextPath, capped)
-        .pipe(Effect.mapError(toTerminalHistoryError("migrate", threadId, terminalId)));
+      yield* writeHistoryFile(nextPath, capped).pipe(
+        Effect.mapError(toTerminalHistoryError("migrate", threadId, terminalId)),
+      );
       yield* fileSystem.remove(legacyPath, { force: true }).pipe(
         Effect.catch((cleanupError) =>
           Effect.logWarning("failed to remove legacy terminal history", {

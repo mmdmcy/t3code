@@ -86,7 +86,10 @@ export function readDesktopSettings(settingsPath: string, appVersion: string): D
 export function writeDesktopSettings(settingsPath: string, settings: DesktopSettings): void {
   const directory = Path.dirname(settingsPath);
   const tempPath = `${settingsPath}.${process.pid}.${Date.now()}.tmp`;
-  FS.mkdirSync(directory, { recursive: true });
+  FS.mkdirSync(directory, { recursive: true, mode: 0o700 });
+  FS.chmodSync(directory, 0o700);
   FS.writeFileSync(tempPath, `${JSON.stringify(settings, null, 2)}\n`, "utf8");
+  FS.chmodSync(tempPath, 0o600);
   FS.renameSync(tempPath, settingsPath);
+  FS.chmodSync(settingsPath, 0o600);
 }

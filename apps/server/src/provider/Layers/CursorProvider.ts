@@ -31,6 +31,7 @@ import {
   type CommandResult,
 } from "../providerSnapshot.ts";
 import { makeManagedServerProvider } from "../makeManagedServerProvider.ts";
+import { providerProcessEnv } from "../processEnvironment.ts";
 import { CursorProvider } from "../Services/CursorProvider.ts";
 import { AcpSessionRuntime } from "../acp/AcpSessionRuntime.ts";
 import { ServerSettingsService } from "../../serverSettings.ts";
@@ -1000,6 +1001,7 @@ const runCursorCommand = (args: ReadonlyArray<string>) =>
       Effect.map((settings) => settings.providers.cursor),
     );
     const command = ChildProcess.make(cursorSettings.binaryPath, [...args], {
+      env: providerProcessEnv(),
       shell: process.platform === "win32",
     });
 

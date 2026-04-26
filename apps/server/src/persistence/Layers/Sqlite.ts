@@ -26,7 +26,38 @@ const makeRuntimeSqliteLayer = Effect.fn("makeRuntimeSqliteLayer")(function* (
   return clientModule.layer(config);
 }, Layer.unwrap);
 
-const setup = Layer.effectDiscard(
+const secureSqliteFiles = Effect.fn("secureSqliteFiles")(function* (dbPath: string) {
+  const fs = yield* FileSystem.FileSystem;
+  yield* Effect.all(
+    [dbPath, `${dbPath}-wal`, `${dbPath}-shm`].map((filePath) =>
+      fs
+        .chmod(filePath, 0o600)
+        .pipe(
+          Effect.catch((cause) =>
+            cause.reason._tag === "NotFound"
+              ? Effect.void
+              : Effect.logWarning("failed to secure sqlite file", { filePath, cause }),
+          ),
+        ),
+    ),
+    { concurrency: "unbounded" },
+  );
+});
+
+const setup = (dbPath: string | null) =>
+  Layer.effectDiscard(
+    Effect.gen(function* () {
+      const sql = yield* SqlClient.SqlClient;
+      yield* sql`PRAGMA journal_mode = WAL;`;
+      yield* sql`PRAGMA foreign_keys = ON;`;
+      yield* runMigrations();
+      if (dbPath !== null) {
+        yield* secureSqliteFiles(dbPath);
+      }
+    }),
+  );
+
+const setupMemory = Layer.effectDiscard(
   Effect.gen(function* () {
     const sql = yield* SqlClient.SqlClient;
     yield* sql`PRAGMA journal_mode = WAL;`;
@@ -40,10 +71,12 @@ export const makeSqlitePersistenceLive = Effect.fn("makeSqlitePersistenceLive")(
 ) {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
-  yield* fs.makeDirectory(path.dirname(dbPath), { recursive: true });
+  const dbDirectory = path.dirname(dbPath);
+  yield* fs.makeDirectory(dbDirectory, { recursive: true, mode: 0o700 });
+  yield* fs.chmod(dbDirectory, 0o700);
 
   return Layer.provideMerge(
-    setup,
+    setup(dbPath),
     makeRuntimeSqliteLayer({
       filename: dbPath,
       spanAttributes: {
@@ -55,7 +88,7 @@ export const makeSqlitePersistenceLive = Effect.fn("makeSqlitePersistenceLive")(
 }, Layer.unwrap);
 
 export const SqlitePersistenceMemory = Layer.provideMerge(
-  setup,
+  setupMemory,
   makeRuntimeSqliteLayer({ filename: ":memory:" }),
 );
 

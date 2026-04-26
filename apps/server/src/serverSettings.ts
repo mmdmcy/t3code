@@ -239,6 +239,7 @@ const makeServerSettings = Effect.gen(function* () {
     return writeFileStringAtomically({
       filePath: settingsPath,
       contents: `${JSON.stringify(sparseSettings, null, 2)}\n`,
+      mode: 0o600,
     }).pipe(
       Effect.provideService(FileSystem.FileSystem, fs),
       Effect.provideService(Path.Path, pathService),

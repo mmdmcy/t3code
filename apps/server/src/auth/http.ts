@@ -12,6 +12,8 @@ import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/unstab
 import { AuthError, ServerAuth } from "./Services/ServerAuth.ts";
 import { SessionCredentialService } from "./Services/SessionCredentialService.ts";
 import { deriveAuthClientMetadata } from "./utils.ts";
+import { isAllowedBrowserRequestOrigin } from "../browserOrigin.ts";
+import { ServerConfig } from "../config.ts";
 
 export const respondToAuthError = (error: AuthError) =>
   Effect.gen(function* () {
@@ -57,10 +59,23 @@ function hasRequestBody(headers: typeof PairingCredentialRequestHeaders.Type) {
   return typeof headers["transfer-encoding"] === "string";
 }
 
+const requireTrustedBrowserOrigin = Effect.gen(function* () {
+  const request = yield* HttpServerRequest.HttpServerRequest;
+  const config = yield* ServerConfig;
+  if (isAllowedBrowserRequestOrigin(request.headers.origin, request.headers.host, config)) {
+    return;
+  }
+  return yield* new AuthError({
+    message: "Forbidden browser origin.",
+    status: 403,
+  });
+});
+
 export const authBootstrapRouteLayer = HttpRouter.add(
   "POST",
   "/api/auth/bootstrap",
   Effect.gen(function* () {
+    yield* requireTrustedBrowserOrigin;
     const request = yield* HttpServerRequest.HttpServerRequest;
     const serverAuth = yield* ServerAuth;
     const sessions = yield* SessionCredentialService;
@@ -94,6 +109,7 @@ export const authBearerBootstrapRouteLayer = HttpRouter.add(
   "POST",
   "/api/auth/bootstrap/bearer",
   Effect.gen(function* () {
+    yield* requireTrustedBrowserOrigin;
     const request = yield* HttpServerRequest.HttpServerRequest;
     const serverAuth = yield* ServerAuth;
     const payload = yield* HttpServerRequest.schemaBodyJson(AuthBootstrapInput).pipe(

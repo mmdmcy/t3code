@@ -48,7 +48,6 @@ import {
   getPrimaryEnvironmentConnection,
   startEnvironmentConnectionService,
 } from "../environments/runtime";
-import { configureClientTracing } from "../observability/clientTracing";
 import {
   ensurePrimaryEnvironmentReady,
   resolveInitialServerAuthGateState,
@@ -97,7 +96,6 @@ function RootRouteView() {
   return (
     <ToastProvider>
       <AnchoredToastProvider>
-        <AuthenticatedTracingBootstrap />
         <ServerStateBootstrap />
         <EnvironmentConnectionManagerBootstrap />
         <EventRouter />
@@ -188,14 +186,6 @@ function errorDetails(error: unknown): string {
 
 function ServerStateBootstrap() {
   useEffect(() => startServerStateSync(getPrimaryEnvironmentConnection().client.server), []);
-
-  return null;
-}
-
-function AuthenticatedTracingBootstrap() {
-  useEffect(() => {
-    void configureClientTracing();
-  }, []);
 
   return null;
 }

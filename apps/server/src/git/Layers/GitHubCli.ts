@@ -107,6 +107,11 @@ const makeGitHubCli = Effect.sync(() => {
       try: () =>
         runProcess("gh", input.args, {
           cwd: input.cwd,
+          env: {
+            ...process.env,
+            GH_NO_UPDATE_NOTIFIER: "1",
+            GH_PROMPT_DISABLED: "1",
+          },
           timeoutMs: input.timeoutMs ?? DEFAULT_TIMEOUT_MS,
         }),
       catch: (error) => normalizeGitHubCliError("execute", error),

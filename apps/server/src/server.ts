@@ -1,4 +1,4 @@
-import { Effect, Layer } from "effect";
+import { Config, Effect, Layer } from "effect";
 import { FetchHttpClient, HttpRouter, HttpServer } from "effect/unstable/http";
 
 import { ServerConfig } from "./config.ts";
@@ -147,12 +147,19 @@ const ProviderSessionDirectoryLayerLive = ProviderSessionDirectoryLive.pipe(
 const ProviderLayerLive = Layer.unwrap(
   Effect.gen(function* () {
     const { providerEventLogPath } = yield* ServerConfig;
-    const nativeEventLogger = yield* makeEventNdjsonLogger(providerEventLogPath, {
-      stream: "native",
-    });
-    const canonicalEventLogger = yield* makeEventNdjsonLogger(providerEventLogPath, {
-      stream: "canonical",
-    });
+    const providerEventLogsEnabled = yield* Config.boolean("T3CODE_PROVIDER_EVENT_LOGS_ENABLED")
+      .pipe(Config.withDefault(false))
+      .asEffect();
+    const nativeEventLogger = providerEventLogsEnabled
+      ? yield* makeEventNdjsonLogger(providerEventLogPath, {
+          stream: "native",
+        })
+      : undefined;
+    const canonicalEventLogger = providerEventLogsEnabled
+      ? yield* makeEventNdjsonLogger(providerEventLogPath, {
+          stream: "canonical",
+        })
+      : undefined;
     const codexAdapterLayer = makeCodexAdapterLive(
       nativeEventLogger ? { nativeEventLogger } : undefined,
     );

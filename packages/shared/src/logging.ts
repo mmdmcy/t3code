@@ -28,7 +28,7 @@ export class RotatingFileSink {
     this.maxFiles = options.maxFiles;
     this.throwOnError = options.throwOnError ?? false;
 
-    fs.mkdirSync(path.dirname(this.filePath), { recursive: true });
+    fs.mkdirSync(path.dirname(this.filePath), { recursive: true, mode: 0o700 });
     this.pruneOverflowBackups();
     this.currentSize = this.readCurrentSize();
   }
@@ -42,7 +42,8 @@ export class RotatingFileSink {
         this.rotate();
       }
 
-      fs.appendFileSync(this.filePath, buffer);
+      fs.appendFileSync(this.filePath, buffer, { mode: 0o600 });
+      this.secureFileMode(this.filePath);
       this.currentSize += buffer.length;
 
       if (this.currentSize > this.maxBytes) {
@@ -73,6 +74,7 @@ export class RotatingFileSink {
 
       if (fs.existsSync(this.filePath)) {
         fs.renameSync(this.filePath, this.withSuffix(1));
+        this.secureFileMode(this.withSuffix(1));
       }
 
       this.currentSize = 0;
@@ -97,6 +99,16 @@ export class RotatingFileSink {
     } catch {
       if (this.throwOnError) {
         throw new Error(`Failed to prune log backups for ${this.filePath}`);
+      }
+    }
+  }
+
+  private secureFileMode(filePath: string): void {
+    try {
+      fs.chmodSync(filePath, 0o600);
+    } catch {
+      if (this.throwOnError) {
+        throw new Error(`Failed to secure log file ${filePath}`);
       }
     }
   }

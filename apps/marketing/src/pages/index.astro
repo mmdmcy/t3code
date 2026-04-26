@@ -78,6 +78,10 @@ import Layout from "../layouts/Layout.astro";
 
     try {
       const release = await fetchLatestRelease();
+      if (!release) {
+        btn.href = RELEASES_URL;
+        return;
+      }
       const url = pickAsset(release.assets ?? [], platform);
       if (url) {
         btn.href = url;

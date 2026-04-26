@@ -102,4 +102,5 @@ export const writeProviderStatusCache = (input: {
   writeFileStringAtomically({
     filePath: input.filePath,
     contents: `${JSON.stringify(input.provider, null, 2)}\n`,
+    mode: 0o600,
   });

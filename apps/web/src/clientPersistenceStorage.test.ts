@@ -34,11 +34,14 @@ function createLocalStorageStub(): Storage {
 
 function getTestWindow(): Window & typeof globalThis {
   const localStorage = createLocalStorageStub();
+  const sessionStorage = createLocalStorageStub();
   const testWindow = {
     localStorage,
+    sessionStorage,
   } as Window & typeof globalThis;
   vi.stubGlobal("window", testWindow);
   vi.stubGlobal("localStorage", localStorage);
+  vi.stubGlobal("sessionStorage", sessionStorage);
   return testWindow;
 }
 
@@ -49,10 +52,11 @@ afterEach(() => {
 });
 
 describe("clientPersistenceStorage", () => {
-  it("stores browser secrets inline with the saved environment record", async () => {
+  it("stores browser secrets in session storage outside the saved environment record", async () => {
     const testWindow = getTestWindow();
     const {
       SAVED_ENVIRONMENT_REGISTRY_STORAGE_KEY,
+      SAVED_ENVIRONMENT_SECRETS_STORAGE_KEY,
       readBrowserSavedEnvironmentRegistry,
       readBrowserSavedEnvironmentSecret,
       writeBrowserSavedEnvironmentRegistry,
@@ -69,12 +73,53 @@ describe("clientPersistenceStorage", () => {
       JSON.parse(testWindow.localStorage.getItem(SAVED_ENVIRONMENT_REGISTRY_STORAGE_KEY)!),
     ).toEqual({
       version: 1,
-      records: [
-        {
-          ...savedRegistryRecord,
-          bearerToken: "bearer-token",
-        },
-      ],
+      records: [savedRegistryRecord],
+    });
+    expect(
+      JSON.parse(testWindow.sessionStorage.getItem(SAVED_ENVIRONMENT_SECRETS_STORAGE_KEY)!),
+    ).toEqual({
+      version: 1,
+      bearerTokens: {
+        [testEnvironmentId]: "bearer-token",
+      },
+    });
+  });
+
+  it("migrates legacy localStorage bearer tokens into session storage and scrubs localStorage", async () => {
+    const testWindow = getTestWindow();
+    const {
+      SAVED_ENVIRONMENT_REGISTRY_STORAGE_KEY,
+      SAVED_ENVIRONMENT_SECRETS_STORAGE_KEY,
+      readBrowserSavedEnvironmentSecret,
+    } = await import("./clientPersistenceStorage");
+
+    testWindow.localStorage.setItem(
+      SAVED_ENVIRONMENT_REGISTRY_STORAGE_KEY,
+      JSON.stringify({
+        version: 1,
+        records: [
+          {
+            ...savedRegistryRecord,
+            bearerToken: "legacy-bearer-token",
+          },
+        ],
+      }),
+    );
+
+    expect(readBrowserSavedEnvironmentSecret(testEnvironmentId)).toBe("legacy-bearer-token");
+    expect(
+      JSON.parse(testWindow.sessionStorage.getItem(SAVED_ENVIRONMENT_SECRETS_STORAGE_KEY)!),
+    ).toEqual({
+      version: 1,
+      bearerTokens: {
+        [testEnvironmentId]: "legacy-bearer-token",
+      },
+    });
+    expect(
+      JSON.parse(testWindow.localStorage.getItem(SAVED_ENVIRONMENT_REGISTRY_STORAGE_KEY)!),
+    ).toEqual({
+      version: 1,
+      records: [savedRegistryRecord],
     });
   });
 });

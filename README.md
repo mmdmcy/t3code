@@ -1,6 +1,23 @@
-# T3 Code
+# T3 Code (Privacy-Hardened Fork)
 
 T3 Code is a minimal web GUI for coding agents (currently Codex and Claude, more coming soon).
+
+This fork is configured for private, local-first personal and business use. The AI provider
+CLIs and APIs still need network access to do their work, but repo-owned telemetry, update
+checks, remote assets, and broad browser access are disabled or locked down by default.
+
+## Privacy defaults in this fork
+
+- Server binds to `127.0.0.1` by default.
+- Browser API access uses explicit origin checks and non-wildcard CORS.
+- PostHog telemetry is off unless `T3CODE_TELEMETRY_ENABLED=1` is set.
+- OTLP export is off unless `T3CODE_ALLOW_OTLP_EXPORTS=1` is set.
+- Local tracing, provider event logs, desktop file logs, and terminal history persistence are off by default.
+- Desktop auto-update checks are off unless `T3CODE_ENABLE_AUTO_UPDATE=1` is set.
+- Provider subprocesses receive common telemetry opt-out environment variables by default.
+- Browser bearer secrets are stored in session storage, and legacy local storage secrets are scrubbed on migration.
+- App state, logs, SQLite files, and secrets are written with private filesystem permissions where supported.
+- Runtime Google Fonts and CDN icon requests have been removed.
 
 ## Installation
 
@@ -19,7 +36,9 @@ npx t3
 
 ### Desktop app
 
-Install the latest version of the desktop app from [GitHub Releases](https://github.com/pingdotgg/t3code/releases), or from your favorite package registry:
+Install desktop builds from this fork's [GitHub Releases](https://github.com/mmdmcy/t3code/releases)
+when available. Package registry installers may point at upstream builds instead of this
+privacy-hardened fork.
 
 #### Windows (`winget`)
 
@@ -43,8 +62,6 @@ yay -S t3code-bin
 
 We are very very early in this project. Expect bugs.
 
-We are not accepting contributions yet.
-
 Observability guide: [docs/observability.md](./docs/observability.md)
 
 ## If you REALLY want to contribute still.... read this first
@@ -58,5 +75,3 @@ bun install .
 ```
 
 Read [CONTRIBUTING.md](./CONTRIBUTING.md) before opening an issue or PR.
-
-Need support? Join the [Discord](https://discord.gg/jn4EGJjrvv).

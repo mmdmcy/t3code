@@ -561,6 +561,7 @@ function installStdIoCapture(): void {
 
 function initializePackagedLogging(): void {
   if (!app.isPackaged) return;
+  if (process.env.T3CODE_DESKTOP_FILE_LOGS_ENABLED !== "1") return;
   try {
     desktopLogSink = new RotatingFileSink({
       filePath: Path.join(LOG_DIR, "desktop-main.log"),
@@ -870,6 +871,7 @@ function handleCheckForUpdatesMenuClick(): void {
     platform: process.platform,
     appImage: process.env.APPIMAGE,
     disabledByEnv: process.env.T3CODE_DISABLE_AUTO_UPDATE === "1",
+    enabledByEnv: process.env.T3CODE_ENABLE_AUTO_UPDATE === "1",
     hasUpdateFeedConfig,
   });
   if (disabledReason) {
@@ -1148,6 +1150,7 @@ function shouldEnableAutoUpdates(): boolean {
       platform: process.platform,
       appImage: process.env.APPIMAGE,
       disabledByEnv: process.env.T3CODE_DISABLE_AUTO_UPDATE === "1",
+      enabledByEnv: process.env.T3CODE_ENABLE_AUTO_UPDATE === "1",
       hasUpdateFeedConfig,
     }) === null
   );
@@ -1559,11 +1562,15 @@ function registerIpcHandlers(): void {
 
   ipcMain.removeAllListeners(GET_LOCAL_ENVIRONMENT_BOOTSTRAP_CHANNEL);
   ipcMain.on(GET_LOCAL_ENVIRONMENT_BOOTSTRAP_CHANNEL, (event) => {
+    const bootstrapToken = backendBootstrapToken || undefined;
+    if (bootstrapToken) {
+      backendBootstrapToken = "";
+    }
     event.returnValue = {
       label: "Local environment",
       httpBaseUrl: backendHttpUrl || null,
       wsBaseUrl: backendWsUrl || null,
-      bootstrapToken: backendBootstrapToken || undefined,
+      bootstrapToken,
     } as const;
   });
 

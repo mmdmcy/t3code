@@ -677,6 +677,7 @@ const makeKeybindings = Effect.gen(function* () {
         writeFileStringAtomically({
           filePath: keybindingsConfigPath,
           contents: encoded,
+          mode: 0o600,
         }).pipe(
           Effect.provideService(FileSystem.FileSystem, fs),
           Effect.provideService(Path.Path, path),

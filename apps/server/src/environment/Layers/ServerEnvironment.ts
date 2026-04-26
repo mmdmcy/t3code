@@ -1,6 +1,7 @@
 import { EnvironmentId, type ExecutionEnvironmentDescriptor } from "@t3tools/contracts";
 import { Effect, FileSystem, Layer, Path, Random } from "effect";
 
+import { writeFileStringAtomically } from "../../atomicWrite.ts";
 import { ServerConfig } from "../../config.ts";
 import { ServerEnvironment, type ServerEnvironmentShape } from "../Services/ServerEnvironment.ts";
 import packageJson from "../../../package.json" with { type: "json" };
@@ -51,7 +52,11 @@ export const makeServerEnvironment = Effect.fn("makeServerEnvironment")(function
   });
 
   const persistEnvironmentId = (value: string) =>
-    fileSystem.writeFileString(serverConfig.environmentIdPath, `${value}\n`);
+    writeFileStringAtomically({
+      filePath: serverConfig.environmentIdPath,
+      contents: `${value}\n`,
+      mode: 0o600,
+    });
 
   const environmentIdRaw = yield* Effect.gen(function* () {
     const persisted = yield* readPersistedEnvironmentId;

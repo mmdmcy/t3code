@@ -87,6 +87,10 @@ function isThreadDetailEvent(event: OrchestrationEvent): event is Extract<
 }
 
 const PROVIDER_STATUS_DEBOUNCE_MS = 200;
+const isLocalTracingEnabled = () => {
+  const value = process.env.T3CODE_LOCAL_TRACING_ENABLED?.trim().toLowerCase();
+  return value === "1" || value === "true" || value === "yes";
+};
 
 function toAuthAccessStreamEvent(
   change: BootstrapCredentialChange | SessionCredentialChange,
@@ -527,7 +531,7 @@ const makeWsRpcLayer = (currentSessionId: AuthSessionId) =>
           availableEditors: resolveAvailableEditors(),
           observability: {
             logsDirectoryPath: config.logsDir,
-            localTracingEnabled: true,
+            localTracingEnabled: isLocalTracingEnabled(),
             ...(config.otlpTracesUrl !== undefined ? { otlpTracesUrl: config.otlpTracesUrl } : {}),
             otlpTracesEnabled: config.otlpTracesUrl !== undefined,
             ...(config.otlpMetricsUrl !== undefined

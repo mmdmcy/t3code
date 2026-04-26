@@ -102,21 +102,28 @@ export const deriveServerPaths = Effect.fn(function* (
 export const ensureServerDirectories = Effect.fn(function* (derivedPaths: ServerDerivedPaths) {
   const fs = yield* FileSystem.FileSystem;
   const path = yield* Path.Path;
+  const ensurePrivateDirectory = (directory: string) =>
+    fs
+      .makeDirectory(directory, { recursive: true, mode: 0o700 })
+      .pipe(Effect.flatMap(() => fs.chmod(directory, 0o700)));
 
   yield* Effect.all(
-    [
-      fs.makeDirectory(derivedPaths.stateDir, { recursive: true }),
-      fs.makeDirectory(derivedPaths.logsDir, { recursive: true }),
-      fs.makeDirectory(derivedPaths.providerLogsDir, { recursive: true }),
-      fs.makeDirectory(derivedPaths.terminalLogsDir, { recursive: true }),
-      fs.makeDirectory(derivedPaths.attachmentsDir, { recursive: true }),
-      fs.makeDirectory(derivedPaths.worktreesDir, { recursive: true }),
-      fs.makeDirectory(path.dirname(derivedPaths.keybindingsConfigPath), { recursive: true }),
-      fs.makeDirectory(path.dirname(derivedPaths.settingsPath), { recursive: true }),
-      fs.makeDirectory(derivedPaths.providerStatusCacheDir, { recursive: true }),
-      fs.makeDirectory(path.dirname(derivedPaths.anonymousIdPath), { recursive: true }),
-      fs.makeDirectory(path.dirname(derivedPaths.serverRuntimeStatePath), { recursive: true }),
-    ],
+    Array.from(
+      new Set([
+        path.dirname(derivedPaths.stateDir),
+        derivedPaths.stateDir,
+        derivedPaths.logsDir,
+        derivedPaths.providerLogsDir,
+        derivedPaths.terminalLogsDir,
+        derivedPaths.attachmentsDir,
+        derivedPaths.worktreesDir,
+        path.dirname(derivedPaths.keybindingsConfigPath),
+        path.dirname(derivedPaths.settingsPath),
+        derivedPaths.providerStatusCacheDir,
+        path.dirname(derivedPaths.anonymousIdPath),
+        path.dirname(derivedPaths.serverRuntimeStatePath),
+      ]),
+    ).map(ensurePrivateDirectory),
     { concurrency: "unbounded" },
   );
 });

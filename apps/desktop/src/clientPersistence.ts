@@ -41,9 +41,12 @@ function readJsonFile<T>(filePath: string): T | null {
 function writeJsonFile(filePath: string, value: unknown): void {
   const directory = Path.dirname(filePath);
   const tempPath = `${filePath}.${process.pid}.${Date.now()}.tmp`;
-  FS.mkdirSync(directory, { recursive: true });
+  FS.mkdirSync(directory, { recursive: true, mode: 0o700 });
+  FS.chmodSync(directory, 0o700);
   FS.writeFileSync(tempPath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
+  FS.chmodSync(tempPath, 0o600);
   FS.renameSync(tempPath, filePath);
+  FS.chmodSync(filePath, 0o600);
 }
 
 function isPersistedSavedEnvironmentStorageRecord(

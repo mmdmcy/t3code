@@ -25,6 +25,8 @@ import {
   SessionCredentialService,
 } from "../Services/SessionCredentialService.ts";
 import { AuthControlPlaneLive, AuthCoreLive } from "./AuthControlPlane.ts";
+import { isAllowedBrowserRequestOrigin } from "../../browserOrigin.ts";
+import { ServerConfig } from "../../config.ts";
 
 type BootstrapExchangeResult = {
   readonly response: AuthBootstrapResult;
@@ -60,6 +62,7 @@ function parseBearerToken(request: HttpServerRequest.HttpServerRequest): string 
 }
 
 export const makeServerAuth = Effect.gen(function* () {
+  const serverConfig = yield* ServerConfig;
   const policy = yield* ServerAuthPolicy;
   const bootstrapCredentials = yield* BootstrapCredentialService;
   const authControlPlane = yield* AuthControlPlane;
@@ -92,6 +95,20 @@ export const makeServerAuth = Effect.gen(function* () {
       ),
     );
 
+  const validateBrowserOrigin = (
+    request: HttpServerRequest.HttpServerRequest,
+  ): Effect.Effect<void, AuthError> => {
+    if (isAllowedBrowserRequestOrigin(request.headers.origin, request.headers.host, serverConfig)) {
+      return Effect.void;
+    }
+    return Effect.fail(
+      new AuthError({
+        message: "Forbidden browser origin.",
+        status: 403,
+      }),
+    );
+  };
+
   const authenticateRequest = (request: HttpServerRequest.HttpServerRequest) => {
     const cookieToken = request.cookies[sessions.cookieName];
     const bearerToken = parseBearerToken(request);
@@ -104,7 +121,7 @@ export const makeServerAuth = Effect.gen(function* () {
         }),
       );
     }
-    return authenticateToken(credential);
+    return validateBrowserOrigin(request).pipe(Effect.flatMap(() => authenticateToken(credential)));
   };
 
   const getSessionState: ServerAuthShape["getSessionState"] = (request) =>
@@ -343,6 +360,8 @@ export const makeServerAuth = Effect.gen(function* () {
 
   const authenticateWebSocketUpgrade: ServerAuthShape["authenticateWebSocketUpgrade"] = (request) =>
     Effect.gen(function* () {
+      yield* validateBrowserOrigin(request);
+
       const requestUrl = HttpServerRequest.toURL(request);
       if (Option.isSome(requestUrl)) {
         const websocketToken = requestUrl.value.searchParams.get(WEBSOCKET_TOKEN_QUERY_PARAM);

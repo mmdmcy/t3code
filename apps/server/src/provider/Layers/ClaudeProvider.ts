@@ -39,6 +39,7 @@ import {
 } from "../providerSnapshot.ts";
 import { compareCliVersions } from "../cliVersion.ts";
 import { makeManagedServerProvider } from "../makeManagedServerProvider.ts";
+import { providerProcessEnv } from "../processEnvironment.ts";
 import { ClaudeProvider } from "../Services/ClaudeProvider.ts";
 import { ServerSettingsService } from "../../serverSettings.ts";
 import { ServerSettingsError } from "@t3tools/contracts";
@@ -625,6 +626,7 @@ const runClaudeCommand = Effect.fn("runClaudeCommand")(function* (args: Readonly
     Effect.map((settings) => settings.providers.claudeAgent),
   );
   const command = ChildProcess.make(claudeSettings.binaryPath, [...args], {
+    env: providerProcessEnv(),
     shell: process.platform === "win32",
   });
   return yield* spawnAndCollect(claudeSettings.binaryPath, command);

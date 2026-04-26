@@ -31,6 +31,7 @@ import { ChildProcess, ChildProcessSpawner } from "effect/unstable/process";
 
 import { isWindowsCommandNotFound } from "../processRunner.ts";
 import { collectStreamAsString } from "./providerSnapshot.ts";
+import { providerProcessEnv } from "./processEnvironment.ts";
 import { NetService } from "@t3tools/shared/Net";
 
 const OPENCODE_SERVER_READY_PREFIX = "opencode server listening";
@@ -274,7 +275,7 @@ const makeOpenCodeRuntime = Effect.gen(function* () {
       const child = yield* spawner.spawn(
         ChildProcess.make(input.binaryPath, [...input.args], {
           shell: process.platform === "win32",
-          env: process.env,
+          env: providerProcessEnv(),
         }),
       );
       const [stdout, stderr, code] = yield* Effect.all(
@@ -330,10 +331,9 @@ const makeOpenCodeRuntime = Effect.gen(function* () {
       const child = yield* spawner
         .spawn(
           ChildProcess.make(input.binaryPath, args, {
-            env: {
-              ...process.env,
+            env: providerProcessEnv({
               OPENCODE_CONFIG_CONTENT: JSON.stringify({}),
-            },
+            }),
           }),
         )
         .pipe(

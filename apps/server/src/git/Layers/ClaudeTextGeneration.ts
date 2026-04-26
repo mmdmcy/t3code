@@ -38,6 +38,7 @@ import {
   resolveClaudeApiModelId,
   resolveClaudeEffort,
 } from "../../provider/Layers/ClaudeProvider.ts";
+import { providerProcessEnv } from "../../provider/processEnvironment.ts";
 import { ServerSettingsService } from "../../serverSettings.ts";
 
 const CLAUDE_TIMEOUT_MS = 180_000;
@@ -133,6 +134,7 @@ const makeClaudeTextGeneration = Effect.gen(function* () {
         ],
         {
           cwd,
+          env: providerProcessEnv(),
           shell: process.platform === "win32",
           stdin: {
             stream: Stream.encodeText(Stream.make(prompt)),

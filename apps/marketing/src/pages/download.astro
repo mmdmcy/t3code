@@ -6,7 +6,7 @@ import { RELEASES_URL } from "../lib/releases";
 <Layout title="Download — T3 Code" description="Download T3 Code for macOS, Windows, or Linux.">
   <h1 class="heading">Download T3 Code</h1>
   <p class="subheading">
-    <span id="version-label">Loading latest release&hellip;</span>
+    <span id="version-label">Downloads are available on GitHub releases.</span>
     <a id="changelog-link" class="changelog-link" href="#" target="_blank" rel="noopener noreferrer" style="display:none">View changelog<span aria-hidden="true"> &#8599;</span></a>
   </p>
 
@@ -75,6 +75,13 @@ import { RELEASES_URL } from "../lib/releases";
 
     try {
       const release = await fetchLatestRelease();
+
+      if (!release) {
+        cards.forEach((card) => {
+          card.href = RELEASES_URL;
+        });
+        return;
+      }
 
       if (versionLabel && release.tag_name) {
         versionLabel.textContent = `Latest (${release.tag_name})`;

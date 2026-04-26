@@ -16,6 +16,7 @@ import {
   type AcpSessionModeState,
   type AcpToolCallState,
 } from "./AcpRuntimeModel.ts";
+import { providerProcessEnv } from "../processEnvironment.ts";
 
 export interface AcpSpawnInput {
   readonly command: string;
@@ -188,7 +189,7 @@ const makeAcpSessionRuntime = (
       .spawn(
         ChildProcess.make(options.spawn.command, [...options.spawn.args], {
           ...(options.spawn.cwd ? { cwd: options.spawn.cwd } : {}),
-          ...(options.spawn.env ? { env: { ...process.env, ...options.spawn.env } } : {}),
+          env: providerProcessEnv(options.spawn.env),
           shell: process.platform === "win32",
         }),
       )

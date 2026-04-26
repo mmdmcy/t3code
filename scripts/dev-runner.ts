@@ -151,7 +151,9 @@ export function createDevRunnerEnv({
 
     const output: NodeJS.ProcessEnv = {
       ...baseEnv,
+      ASTRO_TELEMETRY_DISABLED: "1",
       PORT: String(webPort),
+      TURBO_TELEMETRY_DISABLED: "1",
       VITE_DEV_SERVER_URL:
         devUrl?.toString() ??
         `http://${isDesktopMode ? DESKTOP_DEV_LOOPBACK_HOST : "localhost"}:${webPort}`,
