@@ -68,6 +68,11 @@ cd /home/rei/Documents/github/t3code
 bun install
 ```
 
+This fork intentionally avoids workspace `prepare` scripts. In particular, it does not run the
+Effect language-service TypeScript patch during install because that patch is optional for running
+the app and can spawn large Node processes when repeated across the monorepo. This keeps normal
+installs lighter, quieter, and less surprising.
+
 For the most paranoid install mode, you can skip package lifecycle scripts:
 
 ```bash

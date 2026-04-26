@@ -59,7 +59,6 @@
         "open": "^10.1.0",
       },
       "devDependencies": {
-        "@effect/language-service": "catalog:",
         "@effect/vitest": "catalog:",
         "@t3tools/contracts": "workspace:*",
         "@t3tools/shared": "workspace:*",
@@ -107,7 +106,6 @@
         "zustand": "^5.0.11",
       },
       "devDependencies": {
-        "@effect/language-service": "catalog:",
         "@rolldown/plugin-babel": "^0.2.0",
         "@tailwindcss/vite": "^4.0.0",
         "@tanstack/router-plugin": "^1.161.0",
@@ -133,7 +131,6 @@
         "@t3tools/contracts": "workspace:*",
       },
       "devDependencies": {
-        "@effect/language-service": "catalog:",
         "typescript": "catalog:",
         "vitest": "catalog:",
       },
@@ -145,7 +142,6 @@
         "effect": "catalog:",
       },
       "devDependencies": {
-        "@effect/language-service": "catalog:",
         "@effect/vitest": "catalog:",
         "tsdown": "catalog:",
         "typescript": "catalog:",
@@ -158,7 +154,6 @@
         "effect": "catalog:",
       },
       "devDependencies": {
-        "@effect/language-service": "catalog:",
         "@effect/openapi-generator": "catalog:",
         "@effect/platform-node": "catalog:",
         "@effect/vitest": "catalog:",
@@ -173,7 +168,6 @@
         "effect": "catalog:",
       },
       "devDependencies": {
-        "@effect/language-service": "catalog:",
         "@effect/openapi-generator": "catalog:",
         "@effect/platform-node": "catalog:",
         "@effect/vitest": "catalog:",
@@ -190,7 +184,6 @@
         "effect": "catalog:",
       },
       "devDependencies": {
-        "@effect/language-service": "catalog:",
         "@effect/vitest": "catalog:",
         "@types/node": "catalog:",
         "typescript": "catalog:",
@@ -207,7 +200,6 @@
         "effect": "catalog:",
       },
       "devDependencies": {
-        "@effect/language-service": "catalog:",
         "@effect/vitest": "catalog:",
         "@types/bun": "catalog:",
         "typescript": "catalog:",
@@ -230,7 +222,6 @@
   },
   "catalog": {
     "@effect/atom-react": "4.0.0-beta.45",
-    "@effect/language-service": "0.84.2",
     "@effect/openapi-generator": "4.0.0-beta.45",
     "@effect/platform-bun": "4.0.0-beta.45",
     "@effect/platform-node": "4.0.0-beta.45",
@@ -328,8 +319,6 @@
     "@dnd-kit/utilities": ["@dnd-kit/utilities@3.2.2", "", { "dependencies": { "tslib": "^2.0.0" }, "peerDependencies": { "react": ">=16.8.0" } }, "sha512-+MKAJEOfaBe5SmV6t34p80MMKhjvUz0vRrvVJbPT0WElzaOJ/1xs+D+KDv+tD/NE5ujfrChEcshd4fLn0wpiqg=="],
 
     "@effect/atom-react": ["@effect/atom-react@4.0.0-beta.45", "", { "peerDependencies": { "effect": "^4.0.0-beta.45", "react": "^19.2.4", "scheduler": "*" } }, "sha512-jCoiae9UNeis9Yoal1p5V/P4eJK9nX89wORom7X5LpR2Ok920SZJc8dIeYkRXRAp9BCYJ/yWcO8gGLf7do71vg=="],
-
-    "@effect/language-service": ["@effect/language-service@0.84.2", "", { "bin": { "effect-language-service": "cli.js" } }, "sha512-l04qNxpiA8rY5yXWckRPJ7Mk5MNerXuNymSFf+IdflfI5i8jgL1bpBNLuP6ijg7wgjdHc/KmTnCj2kT0SCntuA=="],
 
     "@effect/openapi-generator": ["@effect/openapi-generator@4.0.0-beta.45", "", { "peerDependencies": { "@effect/platform-node": "^4.0.0-beta.45", "effect": "^4.0.0-beta.45" }, "bin": { "openapigen": "dist/bin.js" } }, "sha512-zT1UPzapV6mZebMuYhoDPQj/FKNn4R+oDgz1hEcQwazal4+lVDyEYGhRl0PgZroy6CP78fAOWNgW7TriGqSlOQ=="],
 
