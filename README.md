@@ -64,7 +64,6 @@ PTYs, filesystem writes, git commands, auth/session state, and streaming agent e
 From the repo root:
 
 ```bash
-cd /home/rei/Documents/github/t3code
 bun install
 ```
 
