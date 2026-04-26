@@ -21,12 +21,43 @@ checks, remote assets, and broad browser access are disabled or locked down by d
 
 ## Running This Fork
 
+### Daily command
+
+Use this for normal local development on Linux, Windows, and macOS:
+
+```bash
+bun install
+bun dev:desktop
+```
+
+After dependencies are installed once, daily startup is just:
+
+```bash
+bun dev:desktop
+```
+
+This opens the Electron desktop app. The command is intended to behave the same across supported
+operating systems, assuming Bun and at least one AI provider CLI are installed on that machine.
+
 > [!WARNING]
 > T3 Code currently supports Codex and Claude.
 > Install and authenticate at least one provider before use:
 >
 > - Codex: install [Codex CLI](https://github.com/openai/codex) and run `codex login`
 > - Claude: install Claude Code and run `claude auth login`
+
+### What runs under the hood
+
+T3 Code is a GUI/orchestrator for AI CLIs and APIs, but it still runs a private local backend:
+
+- Electron opens the desktop window.
+- The React web UI renders inside that window.
+- The local server talks to Codex/Claude/etc, manages sessions, streams events, stores app state,
+  and handles terminal/filesystem/git operations.
+- The AI provider CLI/API is still the actual agent.
+
+The local server exists because the UI should not directly own long-running CLI processes, terminal
+PTYs, filesystem writes, git commands, auth/session state, and streaming agent events.
 
 ### Install dependencies
 
