@@ -76,6 +76,72 @@ it.layer(NodeServices.layer)("providerStatusCache", (it) => {
     }),
   );
 
+  it.effect("repairs stale plugin cache skill paths when one current revision exists", () =>
+    Effect.gen(function* () {
+      const fs = yield* FileSystem.FileSystem;
+      const tempDir = yield* fs.makeTempDirectoryScoped({ prefix: "t3-provider-cache-" });
+      const pluginCacheDir = `${tempDir}/.codex/plugins/cache/openai-curated/game-studio`;
+      const stalePath = `${pluginCacheDir}/oldrev/skills/game-studio/SKILL.md`;
+      const currentPath = `${pluginCacheDir}/newrev/skills/game-studio/SKILL.md`;
+      yield* fs.makeDirectory(`${pluginCacheDir}/newrev/skills/game-studio`, { recursive: true });
+      yield* fs.writeFileString(currentPath, "# Game Studio\n");
+
+      const provider = makeProvider("codex", {
+        skills: [
+          {
+            name: "game-studio:game-studio",
+            path: stalePath,
+            enabled: true,
+          },
+        ],
+      });
+      const cachePath = resolveProviderStatusCachePath({
+        cacheDir: tempDir,
+        provider: "codex",
+      });
+
+      yield* writeProviderStatusCache({
+        filePath: cachePath,
+        provider,
+      });
+
+      assert.deepStrictEqual((yield* readProviderStatusCache(cachePath))?.skills, [
+        {
+          name: "game-studio:game-studio",
+          path: currentPath,
+          enabled: true,
+        },
+      ]);
+    }),
+  );
+
+  it.effect("drops stale cached skill paths when they cannot be repaired", () =>
+    Effect.gen(function* () {
+      const fs = yield* FileSystem.FileSystem;
+      const tempDir = yield* fs.makeTempDirectoryScoped({ prefix: "t3-provider-cache-" });
+      const provider = makeProvider("codex", {
+        skills: [
+          {
+            name: "missing",
+            path: `${tempDir}/missing/SKILL.md`,
+            enabled: true,
+          },
+        ],
+      });
+      const cachePath = resolveProviderStatusCachePath({
+        cacheDir: tempDir,
+        provider: "codex",
+      });
+
+      yield* writeProviderStatusCache({
+        filePath: cachePath,
+        provider,
+      });
+
+      assert.deepStrictEqual((yield* readProviderStatusCache(cachePath))?.skills, []);
+    }),
+  );
+
   it("hydrates cached provider status while preserving current settings-derived models", () => {
     const cachedCodex = makeProvider("codex", {
       checkedAt: "2026-04-10T12:00:00.000Z",
@@ -132,6 +198,7 @@ it.layer(NodeServices.layer)("providerStatusCache", (it) => {
         checkedAt: cachedCodex.checkedAt,
         slashCommands: cachedCodex.slashCommands,
         skills: cachedCodex.skills,
+        plugins: cachedCodex.plugins ?? [],
         message: cachedCodex.message,
       },
     );

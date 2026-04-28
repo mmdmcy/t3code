@@ -20,6 +20,90 @@ const providerOrderRank = (provider: ServerProvider["provider"]): number => {
   return rank === -1 ? Number.MAX_SAFE_INTEGER : rank;
 };
 
+interface ParsedCodexPluginCachePath {
+  readonly pluginCacheDir: string;
+  readonly revision: string;
+  readonly suffixParts: ReadonlyArray<string>;
+}
+
+function parseCodexPluginCachePath(filePath: string): ParsedCodexPluginCachePath | undefined {
+  const normalizedPath = nodePath.normalize(filePath);
+  const root = nodePath.parse(normalizedPath).root;
+  const pathWithoutRoot = normalizedPath.slice(root.length);
+  const parts = pathWithoutRoot.split(nodePath.sep).filter((part) => part.length > 0);
+  const pluginsIndex = parts.findIndex(
+    (part, index) => part === "plugins" && parts[index + 1] === "cache",
+  );
+
+  if (pluginsIndex === -1 || parts.length <= pluginsIndex + 5) {
+    return undefined;
+  }
+
+  const pluginCacheDir = nodePath.join(root, ...parts.slice(0, pluginsIndex + 4));
+  return {
+    pluginCacheDir,
+    revision: parts[pluginsIndex + 4]!,
+    suffixParts: parts.slice(pluginsIndex + 5),
+  };
+}
+
+const pathExists = (fs: FileSystem.FileSystem, filePath: string) =>
+  fs.exists(filePath).pipe(Effect.orElseSucceed(() => false));
+
+const resolveCachedSkillPath = Effect.fn(function* (fs: FileSystem.FileSystem, filePath: string) {
+  if (!nodePath.isAbsolute(filePath)) {
+    return filePath;
+  }
+  if (yield* pathExists(fs, filePath)) {
+    return filePath;
+  }
+
+  const parsedPath = parseCodexPluginCachePath(filePath);
+  if (!parsedPath) {
+    return undefined;
+  }
+
+  const revisions = yield* fs
+    .readDirectory(parsedPath.pluginCacheDir)
+    .pipe(Effect.orElseSucceed(() => [] as ReadonlyArray<string>));
+  const candidates: string[] = [];
+  for (const revision of revisions) {
+    if (revision === parsedPath.revision) {
+      continue;
+    }
+    const candidate = nodePath.join(parsedPath.pluginCacheDir, revision, ...parsedPath.suffixParts);
+    if (yield* pathExists(fs, candidate)) {
+      candidates.push(candidate);
+    }
+  }
+
+  return candidates.length === 1 ? candidates[0] : undefined;
+});
+
+const repairCachedProviderSkillPaths = Effect.fn(function* (provider: ServerProvider) {
+  const fs = yield* FileSystem.FileSystem;
+  const repairedSkills = yield* Effect.forEach(
+    provider.skills,
+    (skill) =>
+      resolveCachedSkillPath(fs, skill.path).pipe(
+        Effect.map((resolvedPath) => (resolvedPath ? [{ ...skill, path: resolvedPath }] : [])),
+      ),
+    { concurrency: "unbounded" },
+  ).pipe(Effect.map((skills) => skills.flat()));
+
+  if (repairedSkills.length !== provider.skills.length) {
+    yield* Effect.logWarning("dropped stale provider skill cache entries", {
+      provider: provider.provider,
+      staleSkillCount: provider.skills.length - repairedSkills.length,
+    });
+  }
+
+  return {
+    ...provider,
+    skills: repairedSkills,
+  };
+});
+
 const mergeProviderModels = (
   fallbackModels: ReadonlyArray<ServerProvider["models"][number]>,
   cachedModels: ReadonlyArray<ServerProvider["models"][number]>,
@@ -57,6 +141,7 @@ export const hydrateCachedProvider = (input: {
     checkedAt: input.cachedProvider.checkedAt,
     slashCommands: input.cachedProvider.slashCommands,
     skills: input.cachedProvider.skills,
+    plugins: input.cachedProvider.plugins ?? [],
   };
 
   return input.cachedProvider.message
@@ -84,6 +169,7 @@ export const readProviderStatusCache = (filePath: string) =>
     }
 
     return yield* decodeProviderStatusCache(trimmed).pipe(
+      Effect.flatMap(repairCachedProviderSkillPaths),
       Effect.matchCauseEffect({
         onFailure: (cause) =>
           Effect.logWarning("failed to parse provider status cache, ignoring", {
