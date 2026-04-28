@@ -83,6 +83,135 @@ export const ServerProviderSkill = Schema.Struct({
 });
 export type ServerProviderSkill = typeof ServerProviderSkill.Type;
 
+export const ServerProviderPluginAuthPolicy = Schema.Literals(["ON_INSTALL", "ON_USE"]);
+export type ServerProviderPluginAuthPolicy = typeof ServerProviderPluginAuthPolicy.Type;
+
+export const ServerProviderPluginInstallPolicy = Schema.Literals([
+  "NOT_AVAILABLE",
+  "AVAILABLE",
+  "INSTALLED_BY_DEFAULT",
+]);
+export type ServerProviderPluginInstallPolicy = typeof ServerProviderPluginInstallPolicy.Type;
+
+export const ServerProviderPluginSource = Schema.Union([
+  Schema.Struct({
+    type: Schema.Literal("local"),
+    path: TrimmedNonEmptyString,
+  }),
+  Schema.Struct({
+    type: Schema.Literal("git"),
+    url: TrimmedNonEmptyString,
+    path: Schema.optional(TrimmedNonEmptyString),
+    refName: Schema.optional(TrimmedNonEmptyString),
+    sha: Schema.optional(TrimmedNonEmptyString),
+  }),
+  Schema.Struct({
+    type: Schema.Literal("remote"),
+  }),
+]);
+export type ServerProviderPluginSource = typeof ServerProviderPluginSource.Type;
+
+export const ServerProviderPluginInterface = Schema.Struct({
+  brandColor: Schema.optional(Schema.String),
+  capabilities: Schema.Array(Schema.String).pipe(Schema.withDecodingDefault(Effect.succeed([]))),
+  category: Schema.optional(Schema.String),
+  composerIcon: Schema.optional(Schema.String),
+  composerIconUrl: Schema.optional(Schema.String),
+  defaultPrompt: Schema.Array(Schema.String).pipe(Schema.withDecodingDefault(Effect.succeed([]))),
+  developerName: Schema.optional(Schema.String),
+  displayName: Schema.optional(Schema.String),
+  logo: Schema.optional(Schema.String),
+  logoUrl: Schema.optional(Schema.String),
+  longDescription: Schema.optional(Schema.String),
+  privacyPolicyUrl: Schema.optional(Schema.String),
+  screenshotUrls: Schema.Array(Schema.String).pipe(Schema.withDecodingDefault(Effect.succeed([]))),
+  screenshots: Schema.Array(Schema.String).pipe(Schema.withDecodingDefault(Effect.succeed([]))),
+  shortDescription: Schema.optional(Schema.String),
+  termsOfServiceUrl: Schema.optional(Schema.String),
+  websiteUrl: Schema.optional(Schema.String),
+});
+export type ServerProviderPluginInterface = typeof ServerProviderPluginInterface.Type;
+
+export const ServerProviderPlugin = Schema.Struct({
+  id: TrimmedNonEmptyString,
+  name: TrimmedNonEmptyString,
+  enabled: Schema.Boolean,
+  installed: Schema.Boolean,
+  authPolicy: ServerProviderPluginAuthPolicy,
+  installPolicy: ServerProviderPluginInstallPolicy,
+  marketplaceName: TrimmedNonEmptyString,
+  marketplacePath: Schema.optional(TrimmedNonEmptyString),
+  marketplaceDisplayName: Schema.optional(TrimmedNonEmptyString),
+  featured: Schema.Boolean.pipe(Schema.withDecodingDefault(Effect.succeed(false))),
+  source: ServerProviderPluginSource,
+  interface: Schema.optional(ServerProviderPluginInterface),
+});
+export type ServerProviderPlugin = typeof ServerProviderPlugin.Type;
+
+export const ServerProviderPluginAppSummary = Schema.Struct({
+  id: TrimmedNonEmptyString,
+  name: TrimmedNonEmptyString,
+  description: Schema.optional(Schema.String),
+  installUrl: Schema.optional(Schema.String),
+  needsAuth: Schema.Boolean,
+});
+export type ServerProviderPluginAppSummary = typeof ServerProviderPluginAppSummary.Type;
+
+export const ServerProviderPluginSkillSummary = Schema.Struct({
+  name: TrimmedNonEmptyString,
+  description: Schema.optional(Schema.String),
+  shortDescription: Schema.optional(Schema.String),
+  path: TrimmedNonEmptyString,
+  enabled: Schema.Boolean,
+});
+export type ServerProviderPluginSkillSummary = typeof ServerProviderPluginSkillSummary.Type;
+
+export const ServerProviderPluginDetail = Schema.Struct({
+  summary: ServerProviderPlugin,
+  description: Schema.optional(Schema.String),
+  marketplaceName: TrimmedNonEmptyString,
+  marketplacePath: TrimmedNonEmptyString,
+  apps: Schema.Array(ServerProviderPluginAppSummary),
+  mcpServers: Schema.Array(Schema.String),
+  skills: Schema.Array(ServerProviderPluginSkillSummary),
+});
+export type ServerProviderPluginDetail = typeof ServerProviderPluginDetail.Type;
+
+export const ServerProviderPluginReadInput = Schema.Struct({
+  provider: ProviderKind,
+  pluginName: TrimmedNonEmptyString,
+  marketplacePath: Schema.optional(TrimmedNonEmptyString),
+  remoteMarketplaceName: Schema.optional(TrimmedNonEmptyString),
+});
+export type ServerProviderPluginReadInput = typeof ServerProviderPluginReadInput.Type;
+
+export const ServerProviderPluginInstallInput = ServerProviderPluginReadInput;
+export type ServerProviderPluginInstallInput = typeof ServerProviderPluginInstallInput.Type;
+
+export const ServerProviderPluginUninstallInput = Schema.Struct({
+  provider: ProviderKind,
+  pluginId: TrimmedNonEmptyString,
+});
+export type ServerProviderPluginUninstallInput = typeof ServerProviderPluginUninstallInput.Type;
+
+export const ServerProviderPluginInstallResult = Schema.Struct({
+  authPolicy: ServerProviderPluginAuthPolicy,
+  appsNeedingAuth: Schema.Array(ServerProviderPluginAppSummary),
+});
+export type ServerProviderPluginInstallResult = typeof ServerProviderPluginInstallResult.Type;
+
+export const ServerProviderPluginUninstallResult = Schema.Struct({});
+export type ServerProviderPluginUninstallResult = typeof ServerProviderPluginUninstallResult.Type;
+
+export class ServerProviderPluginError extends Schema.TaggedErrorClass<ServerProviderPluginError>()(
+  "ServerProviderPluginError",
+  {
+    provider: ProviderKind,
+    message: TrimmedNonEmptyString,
+    cause: Schema.optional(Schema.Defect),
+  },
+) {}
+
 export const ServerProvider = Schema.Struct({
   provider: ProviderKind,
   displayName: Schema.optional(TrimmedNonEmptyString),
@@ -100,6 +229,9 @@ export const ServerProvider = Schema.Struct({
     Schema.withDecodingDefault(Effect.succeed([])),
   ),
   skills: Schema.Array(ServerProviderSkill).pipe(Schema.withDecodingDefault(Effect.succeed([]))),
+  plugins: Schema.optional(
+    Schema.Array(ServerProviderPlugin).pipe(Schema.withDecodingDefault(Effect.succeed([]))),
+  ),
 });
 export type ServerProvider = typeof ServerProvider.Type;
 

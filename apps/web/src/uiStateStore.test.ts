@@ -22,6 +22,7 @@ function makeUiState(overrides: Partial<UiState> = {}): UiState {
     projectOrder: [],
     threadLastVisitedAtById: {},
     threadChangedFilesExpandedById: {},
+    sidebarCapabilityPanelView: null,
     ...overrides,
   };
 }

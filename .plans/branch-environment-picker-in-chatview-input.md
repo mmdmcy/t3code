@@ -66,7 +66,7 @@ const branchQuery = useQuery({
 
 ## Verification
 
-1. `turbo build` — compiles
+1. `bun run build` — compiles
 2. Create a new thread → branch bar appears below input with "Local" + current branch
 3. Change branch in dropdown → branch updates on thread
 4. Toggle "New worktree" → send message → worktree created, session uses worktree cwd

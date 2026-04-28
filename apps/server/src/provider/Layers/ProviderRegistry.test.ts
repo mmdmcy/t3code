@@ -145,6 +145,7 @@ function makeCodexProbeSnapshot(
       },
     ],
     skills: [],
+    plugins: [],
     ...input,
   };
 }

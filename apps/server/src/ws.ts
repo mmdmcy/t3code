@@ -18,6 +18,7 @@ import {
   ProjectWriteFileError,
   OrchestrationReplayEventsError,
   FilesystemBrowseError,
+  ServerProviderPluginError,
   ThreadId,
   type TerminalEvent,
   WS_METHODS,
@@ -25,6 +26,7 @@ import {
 } from "@t3tools/contracts";
 import { clamp } from "effect/Number";
 import { HttpRouter, HttpServerRequest } from "effect/unstable/http";
+import { ChildProcessSpawner } from "effect/unstable/process";
 import { RpcSerialization, RpcServer } from "effect/unstable/rpc";
 
 import { CheckpointDiffQuery } from "./checkpointing/Services/CheckpointDiffQuery.ts";
@@ -43,6 +45,11 @@ import {
   observeRpcStreamEffect,
 } from "./observability/RpcInstrumentation.ts";
 import { ProviderRegistry } from "./provider/Services/ProviderRegistry.ts";
+import {
+  installCodexProviderPlugin,
+  readCodexProviderPlugin,
+  uninstallCodexProviderPlugin,
+} from "./provider/Layers/CodexProvider.ts";
 import { ServerLifecycleEvents } from "./serverLifecycleEvents.ts";
 import { ServerRuntimeStartup } from "./serverRuntimeStartup.ts";
 import { ServerSettingsService } from "./serverSettings.ts";
@@ -146,6 +153,7 @@ const makeWsRpcLayer = (currentSessionId: AuthSessionId) =>
       const terminalManager = yield* TerminalManager;
       const providerRegistry = yield* ProviderRegistry;
       const config = yield* ServerConfig;
+      const childProcessSpawner = yield* ChildProcessSpawner.ChildProcessSpawner;
       const lifecycleEvents = yield* ServerLifecycleEvents;
       const serverSettings = yield* ServerSettingsService;
       const startup = yield* ServerRuntimeStartup;
@@ -776,6 +784,65 @@ const makeWsRpcLayer = (currentSessionId: AuthSessionId) =>
           observeRpcEffect(WS_METHODS.serverUpdateSettings, serverSettings.updateSettings(patch), {
             "rpc.aggregate": "server",
           }),
+        [WS_METHODS.serverReadProviderPlugin]: (input) =>
+          observeRpcEffect(
+            WS_METHODS.serverReadProviderPlugin,
+            input.provider === "codex"
+              ? readCodexProviderPlugin({ ...input, cwd: config.cwd }).pipe(
+                  Effect.provideService(ServerSettingsService, serverSettings),
+                  Effect.provideService(
+                    ChildProcessSpawner.ChildProcessSpawner,
+                    childProcessSpawner,
+                  ),
+                )
+              : Effect.fail(
+                  new ServerProviderPluginError({
+                    provider: input.provider,
+                    message: "Provider plugin management is currently available for Codex only.",
+                  }),
+                ),
+            { "rpc.aggregate": "server" },
+          ),
+        [WS_METHODS.serverInstallProviderPlugin]: (input) =>
+          observeRpcEffect(
+            WS_METHODS.serverInstallProviderPlugin,
+            input.provider === "codex"
+              ? installCodexProviderPlugin({ ...input, cwd: config.cwd }).pipe(
+                  Effect.tap(() => providerRegistry.refresh("codex")),
+                  Effect.provideService(ServerSettingsService, serverSettings),
+                  Effect.provideService(
+                    ChildProcessSpawner.ChildProcessSpawner,
+                    childProcessSpawner,
+                  ),
+                )
+              : Effect.fail(
+                  new ServerProviderPluginError({
+                    provider: input.provider,
+                    message: "Provider plugin management is currently available for Codex only.",
+                  }),
+                ),
+            { "rpc.aggregate": "server" },
+          ),
+        [WS_METHODS.serverUninstallProviderPlugin]: (input) =>
+          observeRpcEffect(
+            WS_METHODS.serverUninstallProviderPlugin,
+            input.provider === "codex"
+              ? uninstallCodexProviderPlugin({ ...input, cwd: config.cwd }).pipe(
+                  Effect.tap(() => providerRegistry.refresh("codex")),
+                  Effect.provideService(ServerSettingsService, serverSettings),
+                  Effect.provideService(
+                    ChildProcessSpawner.ChildProcessSpawner,
+                    childProcessSpawner,
+                  ),
+                )
+              : Effect.fail(
+                  new ServerProviderPluginError({
+                    provider: input.provider,
+                    message: "Provider plugin management is currently available for Codex only.",
+                  }),
+                ),
+            { "rpc.aggregate": "server" },
+          ),
         [WS_METHODS.projectsSearchEntries]: (input) =>
           observeRpcEffect(
             WS_METHODS.projectsSearchEntries,

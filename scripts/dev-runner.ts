@@ -20,25 +20,76 @@ export const DEFAULT_T3_HOME = Effect.map(Effect.service(Path.Path), (path) =>
   path.join(NodeOS.homedir(), ".t3"),
 );
 
-const MODE_ARGS = {
-  dev: [
-    "run",
-    "dev",
-    "--ui=tui",
-    "--filter=@t3tools/contracts",
-    "--filter=@t3tools/web",
-    "--filter=t3",
-    "--parallel",
-  ],
-  "dev:server": ["run", "dev", "--filter=t3"],
-  "dev:web": ["run", "dev", "--filter=@t3tools/web"],
-  "dev:desktop": ["run", "dev", "--filter=@t3tools/desktop", "--filter=@t3tools/web", "--parallel"],
-} as const satisfies Record<string, ReadonlyArray<string>>;
+interface DevTask {
+  readonly label: string;
+  readonly cwd: string;
+  readonly script: string;
+}
 
-type DevMode = keyof typeof MODE_ARGS;
+interface DevModePlan {
+  readonly before: ReadonlyArray<DevTask>;
+  readonly parallel: ReadonlyArray<DevTask>;
+}
+
+const CONTRACTS_BUILD_TASK = {
+  label: "@t3tools/contracts build",
+  cwd: "packages/contracts",
+  script: "build",
+} as const satisfies DevTask;
+const CONTRACTS_DEV_TASK = {
+  label: "@t3tools/contracts dev",
+  cwd: "packages/contracts",
+  script: "dev",
+} as const satisfies DevTask;
+const WEB_BUILD_TASK = {
+  label: "@t3tools/web build",
+  cwd: "apps/web",
+  script: "build",
+} as const satisfies DevTask;
+const WEB_DEV_TASK = {
+  label: "@t3tools/web dev",
+  cwd: "apps/web",
+  script: "dev",
+} as const satisfies DevTask;
+const SERVER_BUILD_TASK = {
+  label: "t3 build",
+  cwd: "apps/server",
+  script: "build",
+} as const satisfies DevTask;
+const SERVER_DEV_TASK = {
+  label: "t3 dev",
+  cwd: "apps/server",
+  script: "dev",
+} as const satisfies DevTask;
+const DESKTOP_DEV_TASK = {
+  label: "@t3tools/desktop dev",
+  cwd: "apps/desktop",
+  script: "dev",
+} as const satisfies DevTask;
+
+const MODE_TASKS = {
+  dev: {
+    before: [CONTRACTS_BUILD_TASK],
+    parallel: [CONTRACTS_DEV_TASK, WEB_DEV_TASK, SERVER_DEV_TASK],
+  },
+  "dev:server": {
+    before: [CONTRACTS_BUILD_TASK],
+    parallel: [SERVER_DEV_TASK],
+  },
+  "dev:web": {
+    before: [CONTRACTS_BUILD_TASK],
+    parallel: [WEB_DEV_TASK],
+  },
+  "dev:desktop": {
+    before: [CONTRACTS_BUILD_TASK, WEB_BUILD_TASK, SERVER_BUILD_TASK],
+    parallel: [WEB_DEV_TASK, DESKTOP_DEV_TASK],
+  },
+} as const satisfies Record<string, DevModePlan>;
+
+type DevMode = keyof typeof MODE_TASKS;
 type PortAvailabilityCheck<R = never> = (port: number) => Effect.Effect<boolean, never, R>;
 
-const DEV_RUNNER_MODES = Object.keys(MODE_ARGS) as Array<DevMode>;
+const DEV_RUNNER_MODES = Object.keys(MODE_TASKS) as Array<DevMode>;
 
 class DevRunnerError extends Data.TaggedError("DevRunnerError")<{
   readonly message: string;
@@ -151,9 +202,7 @@ export function createDevRunnerEnv({
 
     const output: NodeJS.ProcessEnv = {
       ...baseEnv,
-      ASTRO_TELEMETRY_DISABLED: "1",
       PORT: String(webPort),
-      TURBO_TELEMETRY_DISABLED: "1",
       VITE_DEV_SERVER_URL:
         devUrl?.toString() ??
         `http://${isDesktopMode ? DESKTOP_DEV_LOOPBACK_HOST : "localhost"}:${webPort}`,
@@ -374,7 +423,35 @@ interface DevRunnerCliInput {
   readonly port: number | undefined;
   readonly devUrl: URL | undefined;
   readonly dryRun: boolean;
-  readonly turboArgs: ReadonlyArray<string>;
+  readonly taskArgs: ReadonlyArray<string>;
+}
+
+function runDevTask(task: DevTask, env: NodeJS.ProcessEnv, taskArgs: ReadonlyArray<string>) {
+  return Effect.gen(function* () {
+    yield* Effect.logInfo(`[dev-runner] ${task.label}: bun run --cwd ${task.cwd} ${task.script}`);
+
+    const child = yield* ChildProcess.make(
+      "bun",
+      ["run", "--cwd", task.cwd, task.script, ...taskArgs],
+      {
+        stdin: "inherit",
+        stdout: "inherit",
+        stderr: "inherit",
+        env,
+        extendEnv: false,
+        shell: process.platform === "win32",
+        detached: false,
+        forceKillAfter: "1500 millis",
+      },
+    );
+
+    const exitCode = yield* child.exitCode;
+    if (exitCode !== 0) {
+      return yield* new DevRunnerError({
+        message: `${task.label} exited with code ${exitCode}`,
+      });
+    }
+  });
 }
 
 export function runDevRunnerWithInput(input: DevRunnerCliInput) {
@@ -432,31 +509,15 @@ export function runDevRunnerWithInput(input: DevRunnerCliInput) {
       return;
     }
 
-    const child = yield* ChildProcess.make(
-      "turbo",
-      [...MODE_ARGS[input.mode], ...input.turboArgs],
-      {
-        stdin: "inherit",
-        stdout: "inherit",
-        stderr: "inherit",
-        env,
-        extendEnv: false,
-        // Windows needs shell mode to resolve .cmd shims (e.g. bun.cmd).
-        shell: process.platform === "win32",
-        // Keep turbo in the same process group so terminal signals (Ctrl+C)
-        // reach it directly. Effect defaults to detached: true on non-Windows,
-        // which would put turbo in a new group and require manual forwarding.
-        detached: false,
-        forceKillAfter: "1500 millis",
-      },
-    );
-
-    const exitCode = yield* child.exitCode;
-    if (exitCode !== 0) {
-      return yield* new DevRunnerError({
-        message: `turbo exited with code ${exitCode}`,
-      });
+    const plan = MODE_TASKS[input.mode];
+    for (const task of plan.before) {
+      yield* runDevTask(task, env, []);
     }
+
+    yield* Effect.all(
+      plan.parallel.map((task) => runDevTask(task, env, input.taskArgs)),
+      { concurrency: "unbounded" },
+    );
   }).pipe(
     Effect.mapError((cause) =>
       cause instanceof DevRunnerError
@@ -507,11 +568,11 @@ const devRunnerCli = Command.make("dev-runner", {
     Flag.withFallbackConfig(optionalUrlConfig("VITE_DEV_SERVER_URL")),
   ),
   dryRun: Flag.boolean("dry-run").pipe(
-    Flag.withDescription("Resolve mode/ports/env and print, but do not spawn turbo."),
+    Flag.withDescription("Resolve mode/ports/env and print, but do not spawn dev tasks."),
     Flag.withDefault(false),
   ),
-  turboArgs: Argument.string("turbo-arg").pipe(
-    Argument.withDescription("Additional turbo args (pass after `--`)."),
+  taskArgs: Argument.string("task-arg").pipe(
+    Argument.withDescription("Additional package script args (pass after `--`)."),
     Argument.variadic(),
   ),
 }).pipe(

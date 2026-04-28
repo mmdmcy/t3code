@@ -71,6 +71,13 @@ import {
   ServerConfigStreamEvent,
   ServerConfig,
   ServerLifecycleStreamEvent,
+  ServerProviderPluginDetail,
+  ServerProviderPluginError,
+  ServerProviderPluginInstallInput,
+  ServerProviderPluginInstallResult,
+  ServerProviderPluginReadInput,
+  ServerProviderPluginUninstallInput,
+  ServerProviderPluginUninstallResult,
   ServerProviderUpdatedPayload,
   ServerUpsertKeybindingInput,
   ServerUpsertKeybindingResult,
@@ -118,6 +125,9 @@ export const WS_METHODS = {
   serverUpsertKeybinding: "server.upsertKeybinding",
   serverGetSettings: "server.getSettings",
   serverUpdateSettings: "server.updateSettings",
+  serverReadProviderPlugin: "server.providerPlugin.read",
+  serverInstallProviderPlugin: "server.providerPlugin.install",
+  serverUninstallProviderPlugin: "server.providerPlugin.uninstall",
 
   // Streaming subscriptions
   subscribeGitStatus: "subscribeGitStatus",
@@ -155,6 +165,27 @@ export const WsServerUpdateSettingsRpc = Rpc.make(WS_METHODS.serverUpdateSetting
   success: ServerSettings,
   error: ServerSettingsError,
 });
+
+export const WsServerReadProviderPluginRpc = Rpc.make(WS_METHODS.serverReadProviderPlugin, {
+  payload: ServerProviderPluginReadInput,
+  success: ServerProviderPluginDetail,
+  error: ServerProviderPluginError,
+});
+
+export const WsServerInstallProviderPluginRpc = Rpc.make(WS_METHODS.serverInstallProviderPlugin, {
+  payload: ServerProviderPluginInstallInput,
+  success: ServerProviderPluginInstallResult,
+  error: ServerProviderPluginError,
+});
+
+export const WsServerUninstallProviderPluginRpc = Rpc.make(
+  WS_METHODS.serverUninstallProviderPlugin,
+  {
+    payload: ServerProviderPluginUninstallInput,
+    success: ServerProviderPluginUninstallResult,
+    error: ServerProviderPluginError,
+  },
+);
 
 export const WsProjectsSearchEntriesRpc = Rpc.make(WS_METHODS.projectsSearchEntries, {
   payload: ProjectSearchEntriesInput,
@@ -361,6 +392,9 @@ export const WsRpcGroup = RpcGroup.make(
   WsServerUpsertKeybindingRpc,
   WsServerGetSettingsRpc,
   WsServerUpdateSettingsRpc,
+  WsServerReadProviderPluginRpc,
+  WsServerInstallProviderPluginRpc,
+  WsServerUninstallProviderPluginRpc,
   WsProjectsSearchEntriesRpc,
   WsProjectsWriteFileRpc,
   WsShellOpenInEditorRpc,

@@ -106,7 +106,7 @@ Context menu component: a positioned `<div>` with `position: fixed` anchored to 
 
 ## Verification
 
-1. `turbo build` — confirm contracts/desktop/renderer all compile
+1. `bun run build` — confirm contracts/desktop/renderer all compile
 2. Launch app, add a project pointing to a git repo
 3. Click "+ New thread" → verify branch list loads
 4. Select a branch, click Start → thread created with branch in title

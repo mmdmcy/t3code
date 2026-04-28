@@ -32,7 +32,13 @@ export interface UiThreadState {
   threadChangedFilesExpandedById: Record<string, Record<string, boolean>>;
 }
 
-export interface UiState extends UiProjectState, UiThreadState {}
+export type SidebarCapabilityPanelView = "skills" | "plugins";
+
+export interface UiCapabilityState {
+  sidebarCapabilityPanelView: SidebarCapabilityPanelView | null;
+}
+
+export interface UiState extends UiProjectState, UiThreadState, UiCapabilityState {}
 
 export interface SyncProjectInput {
   /** Physical project key (env + cwd). Used for manual sort order. */
@@ -52,6 +58,7 @@ const initialState: UiState = {
   projectOrder: [],
   threadLastVisitedAtById: {},
   threadChangedFilesExpandedById: {},
+  sidebarCapabilityPanelView: null,
 };
 
 const persistedCollapsedProjectCwds = new Set<string>();
@@ -606,6 +613,7 @@ interface UiStateStore extends UiState {
   markThreadUnread: (threadId: string, latestTurnCompletedAt: string | null | undefined) => void;
   clearThreadUi: (threadId: string) => void;
   setThreadChangedFilesExpanded: (threadId: string, turnId: string, expanded: boolean) => void;
+  setSidebarCapabilityPanelView: (view: SidebarCapabilityPanelView | null) => void;
   toggleProject: (projectId: string) => void;
   setProjectExpanded: (projectId: string, expanded: boolean) => void;
   reorderProjects: (
@@ -625,6 +633,7 @@ export const useUiStateStore = create<UiStateStore>((set) => ({
   clearThreadUi: (threadId) => set((state) => clearThreadUi(state, threadId)),
   setThreadChangedFilesExpanded: (threadId, turnId, expanded) =>
     set((state) => setThreadChangedFilesExpanded(state, threadId, turnId, expanded)),
+  setSidebarCapabilityPanelView: (view) => set({ sidebarCapabilityPanelView: view }),
   toggleProject: (projectId) => set((state) => toggleProject(state, projectId)),
   setProjectExpanded: (projectId, expanded) =>
     set((state) => setProjectExpanded(state, projectId, expanded)),

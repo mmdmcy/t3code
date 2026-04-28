@@ -20,7 +20,11 @@ import { useMediaQuery } from "../hooks/useMediaQuery";
 import { RIGHT_PANEL_INLINE_LAYOUT_MEDIA_QUERY } from "../rightPanelLayout";
 import { selectEnvironmentState, selectThreadExistsByRef, useStore } from "../store";
 import { createThreadSelectorByRef } from "../storeSelectors";
-import { resolveThreadRouteRef, buildThreadRouteParams } from "../threadRoutes";
+import {
+  resolveThreadRouteRef,
+  buildThreadRouteParams,
+  shouldRedirectMissingThreadRoute,
+} from "../threadRoutes";
 import { RightPanelSheet } from "../components/RightPanelSheet";
 import { Sidebar, SidebarInset, SidebarProvider, SidebarRail } from "~/components/ui/sidebar";
 
@@ -147,24 +151,14 @@ function ChatThreadRouteView() {
   );
   const serverThread = useStore(useMemo(() => createThreadSelectorByRef(threadRef), [threadRef]));
   const threadExists = useStore((store) => selectThreadExistsByRef(store, threadRef));
-  const environmentHasServerThreads = useStore(
-    (store) => selectEnvironmentState(store, threadRef?.environmentId ?? null).threadIds.length > 0,
-  );
   const draftThreadExists = useComposerDraftStore((store) =>
     threadRef ? store.getDraftThreadByRef(threadRef) !== null : false,
   );
   const draftThread = useComposerDraftStore((store) =>
     threadRef ? store.getDraftThreadByRef(threadRef) : null,
   );
-  const environmentHasDraftThreads = useComposerDraftStore((store) => {
-    if (!threadRef) {
-      return false;
-    }
-    return store.hasDraftThreadsInEnvironment(threadRef.environmentId);
-  });
   const routeThreadExists = threadExists || draftThreadExists;
   const serverThreadStarted = threadHasStarted(serverThread);
-  const environmentHasAnyThreads = environmentHasServerThreads || environmentHasDraftThreads;
   const diffOpen = search.diff === "1";
   const shouldUseDiffSheet = useMediaQuery(RIGHT_PANEL_INLINE_LAYOUT_MEDIA_QUERY);
   const currentThreadKey = threadRef ? `${threadRef.environmentId}:${threadRef.threadId}` : null;
@@ -217,10 +211,16 @@ function ChatThreadRouteView() {
       return;
     }
 
-    if (!routeThreadExists && environmentHasAnyThreads) {
+    if (
+      shouldRedirectMissingThreadRoute({
+        bootstrapComplete,
+        hasThreadRef: threadRef !== null,
+        routeThreadExists,
+      })
+    ) {
       void navigate({ to: "/", replace: true });
     }
-  }, [bootstrapComplete, environmentHasAnyThreads, navigate, routeThreadExists, threadRef]);
+  }, [bootstrapComplete, navigate, routeThreadExists, threadRef]);
 
   useEffect(() => {
     if (!threadRef || !serverThreadStarted || !draftThread?.promotedTo) {

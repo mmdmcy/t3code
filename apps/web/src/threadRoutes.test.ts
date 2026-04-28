@@ -8,6 +8,7 @@ import {
   buildThreadRouteParams,
   resolveThreadRouteRef,
   resolveThreadRouteTarget,
+  shouldRedirectMissingThreadRoute,
 } from "./threadRoutes";
 
 describe("threadRoutes", () => {
@@ -63,5 +64,37 @@ describe("threadRoutes", () => {
       kind: "draft",
       draftId: "draft-1",
     });
+  });
+
+  it("redirects missing thread routes after bootstrap, even when no threads remain", () => {
+    expect(
+      shouldRedirectMissingThreadRoute({
+        bootstrapComplete: true,
+        hasThreadRef: true,
+        routeThreadExists: false,
+      }),
+    ).toBe(true);
+
+    expect(
+      shouldRedirectMissingThreadRoute({
+        bootstrapComplete: true,
+        hasThreadRef: true,
+        routeThreadExists: true,
+      }),
+    ).toBe(false);
+    expect(
+      shouldRedirectMissingThreadRoute({
+        bootstrapComplete: false,
+        hasThreadRef: true,
+        routeThreadExists: false,
+      }),
+    ).toBe(false);
+    expect(
+      shouldRedirectMissingThreadRoute({
+        bootstrapComplete: true,
+        hasThreadRef: false,
+        routeThreadExists: false,
+      }),
+    ).toBe(false);
   });
 });

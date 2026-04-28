@@ -163,6 +163,7 @@ import {
 } from "./Sidebar.logic";
 import { sortThreads } from "../lib/threadSort";
 import { SidebarUpdatePill } from "./sidebar/SidebarUpdatePill";
+import { SidebarCapabilitiesPanel } from "./sidebar/SidebarCapabilitiesPanel";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { CommandDialogTrigger } from "./ui/command";
 import { readEnvironmentApi } from "../environmentApi";
@@ -894,6 +895,11 @@ interface SidebarProjectItemProps {
   dragHandleProps: SortableProjectHandleProps | null;
 }
 
+type ProjectRemovalTarget = {
+  member: SidebarProjectGroupMember;
+  threadCount: number;
+};
+
 const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjectItemProps) {
   const {
     project,
@@ -1052,6 +1058,11 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
   const [projectGroupingSelection, setProjectGroupingSelection] = useState<
     SidebarProjectGroupingMode | "inherit"
   >("inherit");
+  const [projectRemovalTarget, setProjectRemovalTarget] = useState<ProjectRemovalTarget | null>(
+    null,
+  );
+  const [removingProjectKey, setRemovingProjectKey] = useState<string | null>(null);
+  const removingProjectKeyRef = useRef<string | null>(null);
   const renamingCommittedRef = useRef(false);
   const renamingInputRef = useRef<HTMLInputElement | null>(null);
   const confirmArchiveButtonRefs = useRef(new Map<string, HTMLButtonElement>());
@@ -1296,116 +1307,86 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
   );
 
   const handleRemoveProject = useCallback(
-    async (member: SidebarProjectGroupMember) => {
-      const api = readLocalApi();
-      if (!api) {
+    (member: SidebarProjectGroupMember) => {
+      const activeRemovalKey = removingProjectKeyRef.current;
+      if (
+        activeRemovalKey === member.physicalProjectKey ||
+        projectRemovalTarget?.member.physicalProjectKey === member.physicalProjectKey
+      ) {
         return;
       }
-
-      const memberProjectRef = scopeProjectRef(member.environmentId, member.id);
       const memberThreadCount = memberThreadCountByPhysicalKey.get(member.physicalProjectKey) ?? 0;
-      if (memberThreadCount > 0) {
-        const warningToastId = toastManager.add(
-          stackedThreadToast({
-            type: "warning",
-            title: "Project is not empty",
-            description: "Delete all threads in this project before removing it.",
-            actionVariant: "destructive",
-            actionProps: {
-              children: "Delete anyway",
-              onClick: () => {
-                void (async () => {
-                  toastManager.close(warningToastId);
-                  await new Promise<void>((resolve) => {
-                    window.setTimeout(resolve, 180);
-                  });
-
-                  const latestProjectThreads = selectSidebarThreadsForProjectRefs(
-                    useStore.getState(),
-                    [memberProjectRef],
-                  );
-                  const confirmed = await api.dialogs.confirm(
-                    latestProjectThreads.length > 0
-                      ? [
-                          `Remove project "${member.name}" and delete its ${latestProjectThreads.length} thread${
-                            latestProjectThreads.length === 1 ? "" : "s"
-                          }?`,
-                          `Path: ${member.cwd}`,
-                          ...(member.environmentLabel
-                            ? [`Environment: ${member.environmentLabel}`]
-                            : []),
-                          "This permanently clears conversation history for those threads.",
-                          "This removes only this project entry.",
-                          "This action cannot be undone.",
-                        ].join("\n")
-                      : [
-                          `Remove project "${member.name}"?`,
-                          `Path: ${member.cwd}`,
-                          ...(member.environmentLabel
-                            ? [`Environment: ${member.environmentLabel}`]
-                            : []),
-                          "This removes only this project entry.",
-                        ].join("\n"),
-                  );
-                  if (!confirmed) {
-                    return;
-                  }
-
-                  await removeProject(member, { force: true });
-                })().catch((error) => {
-                  const message =
-                    error instanceof Error ? error.message : "Unknown error removing project.";
-                  console.error("Failed to remove project", {
-                    projectId: member.id,
-                    environmentId: member.environmentId,
-                    error,
-                  });
-                  toastManager.add(
-                    stackedThreadToast({
-                      type: "error",
-                      title: `Failed to remove "${member.name}"`,
-                      description: message,
-                    }),
-                  );
-                });
-              },
-            },
-          }),
-        );
-        return;
-      }
-
-      const message = [
-        `Remove project "${member.name}"?`,
-        `Path: ${member.cwd}`,
-        ...(member.environmentLabel ? [`Environment: ${member.environmentLabel}`] : []),
-        "This removes only this project entry.",
-      ].join("\n");
-      const confirmed = await api.dialogs.confirm(message);
-      if (!confirmed) {
-        return;
-      }
-
-      try {
-        await removeProject(member);
-      } catch (error) {
-        const message = error instanceof Error ? error.message : "Unknown error removing project.";
-        console.error("Failed to remove project", {
-          projectId: member.id,
-          environmentId: member.environmentId,
-          error,
-        });
-        toastManager.add(
-          stackedThreadToast({
-            type: "error",
-            title: `Failed to remove "${member.name}"`,
-            description: message,
-          }),
-        );
-      }
+      setProjectRemovalTarget({ member, threadCount: memberThreadCount });
     },
-    [memberThreadCountByPhysicalKey, removeProject],
+    [memberThreadCountByPhysicalKey, projectRemovalTarget],
   );
+
+  const closeProjectRemovalDialog = useCallback(() => {
+    if (removingProjectKeyRef.current !== null) {
+      return;
+    }
+    setProjectRemovalTarget(null);
+  }, []);
+
+  const submitProjectRemoval = useCallback(async () => {
+    const target = projectRemovalTarget;
+    if (!target) {
+      return;
+    }
+
+    const { member } = target;
+    const removalKey = member.physicalProjectKey;
+    if (removingProjectKeyRef.current !== null) {
+      return;
+    }
+
+    removingProjectKeyRef.current = removalKey;
+    setRemovingProjectKey(removalKey);
+    try {
+      const memberProjectRef = scopeProjectRef(member.environmentId, member.id);
+      const latestProjectThreads = selectSidebarThreadsForProjectRefs(useStore.getState(), [
+        memberProjectRef,
+      ]);
+      await removeProject(member, { force: latestProjectThreads.length > 0 });
+      setProjectRemovalTarget(null);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error removing project.";
+      console.error("Failed to remove project", {
+        projectId: member.id,
+        environmentId: member.environmentId,
+        error,
+      });
+      toastManager.add(
+        stackedThreadToast({
+          type: "error",
+          title: `Failed to remove "${member.name}"`,
+          description: message,
+        }),
+      );
+    } finally {
+      removingProjectKeyRef.current = null;
+      setRemovingProjectKey(null);
+    }
+  }, [projectRemovalTarget, removeProject]);
+
+  const projectRemovalDialogThreadCount =
+    projectRemovalTarget === null
+      ? 0
+      : (memberThreadCountByPhysicalKey.get(projectRemovalTarget.member.physicalProjectKey) ??
+        projectRemovalTarget.threadCount);
+  const isRemovingProject =
+    projectRemovalTarget !== null &&
+    removingProjectKey === projectRemovalTarget.member.physicalProjectKey;
+  const projectRemovalDialogTitle =
+    projectRemovalTarget !== null && projectRemovalDialogThreadCount > 0
+      ? "Remove project and delete threads?"
+      : "Remove project?";
+  const projectRemovalDialogDescription =
+    projectRemovalTarget !== null && projectRemovalDialogThreadCount > 0
+      ? `This permanently clears conversation history for ${projectRemovalDialogThreadCount} thread${
+          projectRemovalDialogThreadCount === 1 ? "" : "s"
+        }.`
+      : "This removes only this project entry.";
 
   const handleProjectButtonContextMenu = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -2196,6 +2177,66 @@ const SidebarProjectItem = memo(function SidebarProjectItem(props: SidebarProjec
           </DialogFooter>
         </DialogPopup>
       </Dialog>
+
+      <Dialog
+        open={projectRemovalTarget !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            closeProjectRemovalDialog();
+          }
+        }}
+      >
+        <DialogPopup className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{projectRemovalDialogTitle}</DialogTitle>
+            <DialogDescription>
+              {projectRemovalTarget
+                ? `Remove ${projectRemovalTarget.member.name} from the sidebar.`
+                : "Remove this project from the sidebar."}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogPanel className="space-y-3">
+            <div className="rounded-lg border border-border/70 bg-muted/35 px-3 py-2 text-xs text-muted-foreground">
+              {projectRemovalTarget ? (
+                <div className="grid gap-1">
+                  <div className="min-w-0">
+                    <span className="font-medium text-foreground">Path: </span>
+                    <span className="wrap-break-word">{projectRemovalTarget.member.cwd}</span>
+                  </div>
+                  {projectRemovalTarget.member.environmentLabel ? (
+                    <div className="min-w-0">
+                      <span className="font-medium text-foreground">Environment: </span>
+                      <span className="wrap-break-word">
+                        {projectRemovalTarget.member.environmentLabel}
+                      </span>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
+            <p className="text-sm text-muted-foreground">{projectRemovalDialogDescription}</p>
+            {projectRemovalDialogThreadCount > 0 ? (
+              <p className="text-sm font-medium text-destructive">This action cannot be undone.</p>
+            ) : null}
+          </DialogPanel>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              disabled={isRemovingProject}
+              onClick={closeProjectRemovalDialog}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={isRemovingProject}
+              onClick={() => void submitProjectRemoval()}
+            >
+              {isRemovingProject ? "Removing..." : "Remove"}
+            </Button>
+          </DialogFooter>
+        </DialogPopup>
+      </Dialog>
     </>
   );
 });
@@ -2549,6 +2590,7 @@ const SidebarProjectsContent = memo(function SidebarProjectsContent(
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarGroup>
+      <SidebarCapabilitiesPanel />
       {showArm64IntelBuildWarning && arm64IntelBuildWarningDescription ? (
         <SidebarGroup className="px-3 pt-2 pb-0">
           <Alert variant="warning" className="rounded-2xl border-warning/40 bg-warning/8">

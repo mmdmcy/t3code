@@ -21,14 +21,23 @@ import type {
   ServerProviderState,
   ModelCapabilities,
   ServerProviderModel,
+  ServerProviderPlugin,
+  ServerProviderPluginAppSummary,
+  ServerProviderPluginDetail,
+  ServerProviderPluginInstallInput,
+  ServerProviderPluginInstallResult,
+  ServerProviderPluginReadInput,
+  ServerProviderPluginSkillSummary,
+  ServerProviderPluginUninstallInput,
+  ServerProviderPluginUninstallResult,
   ServerProviderSkill,
 } from "@t3tools/contracts";
-import { ServerSettingsError } from "@t3tools/contracts";
+import { ServerProviderPluginError, ServerSettingsError } from "@t3tools/contracts";
 
 import { createModelCapabilities } from "@t3tools/shared/model";
 
 import { makeManagedServerProvider } from "../makeManagedServerProvider.ts";
-import { buildServerProvider } from "../providerSnapshot.ts";
+import { buildServerProvider, nonEmptyTrimmed } from "../providerSnapshot.ts";
 import { CodexProvider } from "../Services/CodexProvider.ts";
 import { providerProcessEnv } from "../processEnvironment.ts";
 import { expandHomePath } from "../../pathExpansion.ts";
@@ -47,6 +56,7 @@ export interface CodexAppServerProviderSnapshot {
   readonly version: string | undefined;
   readonly models: ReadonlyArray<ServerProviderModel>;
   readonly skills: ReadonlyArray<ServerProviderSkill>;
+  readonly plugins: ReadonlyArray<ServerProviderPlugin>;
 }
 
 const REASONING_EFFORT_LABELS: Record<CodexSchema.V2ModelListResponse__ReasoningEffort, string> = {
@@ -215,6 +225,188 @@ function parseCodexSkillsListResponse(
   });
 }
 
+function compactOptionalString(value: string | null | undefined): string | undefined {
+  if (value == null) return undefined;
+  return nonEmptyTrimmed(value);
+}
+
+function compactStringArray(values: ReadonlyArray<string> | null | undefined): string[] {
+  return (values ?? []).flatMap((value) => {
+    const trimmed = compactOptionalString(value);
+    return trimmed ? [trimmed] : [];
+  });
+}
+
+function parseCodexPluginSource(
+  source:
+    | CodexSchema.V2PluginListResponse__PluginSource
+    | CodexSchema.V2PluginReadResponse__PluginSource,
+): ServerProviderPlugin["source"] {
+  if (source.type === "local") {
+    return {
+      type: "local",
+      path: source.path,
+    };
+  }
+
+  if (source.type === "git") {
+    return {
+      type: "git",
+      url: source.url,
+      ...(compactOptionalString(source.path) ? { path: compactOptionalString(source.path) } : {}),
+      ...(compactOptionalString(source.refName)
+        ? { refName: compactOptionalString(source.refName) }
+        : {}),
+      ...(compactOptionalString(source.sha) ? { sha: compactOptionalString(source.sha) } : {}),
+    };
+  }
+
+  return { type: "remote" };
+}
+
+function parseCodexPluginInterface(
+  pluginInterface:
+    | CodexSchema.V2PluginListResponse__PluginInterface
+    | CodexSchema.V2PluginReadResponse__PluginInterface
+    | null
+    | undefined,
+): ServerProviderPlugin["interface"] {
+  if (!pluginInterface) return undefined;
+
+  return {
+    capabilities: compactStringArray(pluginInterface.capabilities),
+    defaultPrompt: compactStringArray(pluginInterface.defaultPrompt),
+    screenshotUrls: compactStringArray(pluginInterface.screenshotUrls),
+    screenshots: compactStringArray(pluginInterface.screenshots),
+    ...(compactOptionalString(pluginInterface.brandColor)
+      ? { brandColor: compactOptionalString(pluginInterface.brandColor) }
+      : {}),
+    ...(compactOptionalString(pluginInterface.category)
+      ? { category: compactOptionalString(pluginInterface.category) }
+      : {}),
+    ...(compactOptionalString(pluginInterface.composerIcon)
+      ? { composerIcon: compactOptionalString(pluginInterface.composerIcon) }
+      : {}),
+    ...(compactOptionalString(pluginInterface.composerIconUrl)
+      ? { composerIconUrl: compactOptionalString(pluginInterface.composerIconUrl) }
+      : {}),
+    ...(compactOptionalString(pluginInterface.developerName)
+      ? { developerName: compactOptionalString(pluginInterface.developerName) }
+      : {}),
+    ...(compactOptionalString(pluginInterface.displayName)
+      ? { displayName: compactOptionalString(pluginInterface.displayName) }
+      : {}),
+    ...(compactOptionalString(pluginInterface.logo)
+      ? { logo: compactOptionalString(pluginInterface.logo) }
+      : {}),
+    ...(compactOptionalString(pluginInterface.logoUrl)
+      ? { logoUrl: compactOptionalString(pluginInterface.logoUrl) }
+      : {}),
+    ...(compactOptionalString(pluginInterface.longDescription)
+      ? { longDescription: compactOptionalString(pluginInterface.longDescription) }
+      : {}),
+    ...(compactOptionalString(pluginInterface.privacyPolicyUrl)
+      ? { privacyPolicyUrl: compactOptionalString(pluginInterface.privacyPolicyUrl) }
+      : {}),
+    ...(compactOptionalString(pluginInterface.shortDescription)
+      ? { shortDescription: compactOptionalString(pluginInterface.shortDescription) }
+      : {}),
+    ...(compactOptionalString(pluginInterface.termsOfServiceUrl)
+      ? { termsOfServiceUrl: compactOptionalString(pluginInterface.termsOfServiceUrl) }
+      : {}),
+    ...(compactOptionalString(pluginInterface.websiteUrl)
+      ? { websiteUrl: compactOptionalString(pluginInterface.websiteUrl) }
+      : {}),
+  };
+}
+
+function parseCodexPluginSummary(
+  input: {
+    readonly marketplaceName: string;
+    readonly marketplacePath?: string | null;
+    readonly marketplaceDisplayName?: string | null;
+    readonly featuredPluginIds?: ReadonlySet<string>;
+  },
+  plugin:
+    | CodexSchema.V2PluginListResponse__PluginSummary
+    | CodexSchema.V2PluginReadResponse__PluginSummary,
+): ServerProviderPlugin {
+  const pluginInterface = parseCodexPluginInterface(plugin.interface);
+  return {
+    id: plugin.id,
+    name: plugin.name,
+    enabled: plugin.enabled,
+    installed: plugin.installed,
+    authPolicy: plugin.authPolicy,
+    installPolicy: plugin.installPolicy,
+    marketplaceName: input.marketplaceName,
+    ...(compactOptionalString(input.marketplacePath)
+      ? { marketplacePath: compactOptionalString(input.marketplacePath) }
+      : {}),
+    ...(compactOptionalString(input.marketplaceDisplayName)
+      ? { marketplaceDisplayName: compactOptionalString(input.marketplaceDisplayName) }
+      : {}),
+    featured: input.featuredPluginIds?.has(plugin.id) ?? false,
+    source: parseCodexPluginSource(plugin.source),
+    ...(pluginInterface ? { interface: pluginInterface } : {}),
+  };
+}
+
+function parseCodexPluginListResponse(
+  response: CodexSchema.V2PluginListResponse,
+): ReadonlyArray<ServerProviderPlugin> {
+  const featuredPluginIds = new Set(response.featuredPluginIds ?? []);
+  return response.marketplaces.flatMap((marketplace) =>
+    marketplace.plugins.map((plugin) =>
+      parseCodexPluginSummary(
+        {
+          marketplaceName: marketplace.name,
+          ...(marketplace.path ? { marketplacePath: marketplace.path } : {}),
+          ...(marketplace.interface?.displayName
+            ? { marketplaceDisplayName: marketplace.interface.displayName }
+            : {}),
+          featuredPluginIds,
+        },
+        plugin,
+      ),
+    ),
+  );
+}
+
+function parseCodexPluginApps(
+  apps: ReadonlyArray<
+    CodexSchema.V2PluginInstallResponse__AppSummary | CodexSchema.V2PluginReadResponse__AppSummary
+  >,
+): ReadonlyArray<ServerProviderPluginAppSummary> {
+  return apps.map((app) => ({
+    id: app.id,
+    name: app.name,
+    needsAuth: app.needsAuth,
+    ...(compactOptionalString(app.description)
+      ? { description: compactOptionalString(app.description) }
+      : {}),
+    ...(compactOptionalString(app.installUrl)
+      ? { installUrl: compactOptionalString(app.installUrl) }
+      : {}),
+  }));
+}
+
+function parseCodexPluginSkills(
+  skills: ReadonlyArray<CodexSchema.V2PluginReadResponse__SkillSummary>,
+): ReadonlyArray<ServerProviderPluginSkillSummary> {
+  return skills.map((skill) => ({
+    name: skill.name,
+    path: skill.path,
+    enabled: skill.enabled,
+    ...(compactOptionalString(skill.description)
+      ? { description: compactOptionalString(skill.description) }
+      : {}),
+    ...(compactOptionalString(skill.shortDescription)
+      ? { shortDescription: compactOptionalString(skill.shortDescription) }
+      : {}),
+  }));
+}
+
 const requestAllCodexModels = Effect.fn("requestAllCodexModels")(function* (
   client: CodexClient.CodexAppServerClientShape,
 ) {
@@ -287,14 +479,28 @@ const probeCodexAppServerProvider = Effect.fn("probeCodexAppServerProvider")(fun
       version,
       models: appendCustomCodexModels([], input.customModels ?? []),
       skills: [],
+      plugins: [],
     } satisfies CodexAppServerProviderSnapshot;
   }
 
-  const [skillsResponse, models] = yield* Effect.all(
+  const [skillsResponse, plugins, models] = yield* Effect.all(
     [
       client.request("skills/list", {
         cwds: [input.cwd],
       }),
+      client
+        .request("plugin/list", {
+          cwds: [input.cwd],
+        })
+        .pipe(
+          Effect.map(parseCodexPluginListResponse),
+          Effect.tapError((error) =>
+            Effect.logWarning("failed to read Codex plugin list, continuing without plugins", {
+              error: error.message,
+            }),
+          ),
+          Effect.orElseSucceed(() => [] as ReadonlyArray<ServerProviderPlugin>),
+        ),
       requestAllCodexModels(client),
     ],
     { concurrency: "unbounded" },
@@ -305,8 +511,142 @@ const probeCodexAppServerProvider = Effect.fn("probeCodexAppServerProvider")(fun
     version,
     models: appendCustomCodexModels(models, input.customModels ?? []),
     skills: parseCodexSkillsListResponse(skillsResponse, input.cwd),
+    plugins,
   } satisfies CodexAppServerProviderSnapshot;
 }, Effect.scoped);
+
+function pluginActionInputParams(
+  input: ServerProviderPluginReadInput | ServerProviderPluginInstallInput,
+) {
+  return {
+    pluginName: input.pluginName,
+    ...(input.marketplacePath ? { marketplacePath: input.marketplacePath } : {}),
+    ...(input.remoteMarketplaceName ? { remoteMarketplaceName: input.remoteMarketplaceName } : {}),
+  };
+}
+
+function mapCodexPluginActionError(error: unknown, action: string): ServerProviderPluginError {
+  if (error instanceof ServerProviderPluginError) {
+    return error;
+  }
+  const detail = error instanceof Error ? error.message : String(error);
+  return new ServerProviderPluginError({
+    provider: PROVIDER,
+    message: `Codex plugin ${action} failed: ${detail}`,
+    cause: error,
+  });
+}
+
+function withCodexAppServerClient<A>(
+  cwd: string,
+  action: string,
+  operation: (
+    client: CodexClient.CodexAppServerClientShape,
+  ) => Effect.Effect<A, CodexErrors.CodexAppServerError>,
+): Effect.Effect<
+  A,
+  ServerProviderPluginError,
+  ServerSettingsService | ChildProcessSpawner.ChildProcessSpawner
+> {
+  return Effect.gen(function* () {
+    const codexSettings = yield* Effect.service(ServerSettingsService).pipe(
+      Effect.flatMap((service) => service.getSettings),
+      Effect.map((settings) => settings.providers.codex),
+    );
+    if (!codexSettings.enabled) {
+      return yield* Effect.fail(
+        new ServerProviderPluginError({
+          provider: PROVIDER,
+          message: "Codex is disabled in T3 Code settings.",
+        }),
+      );
+    }
+
+    const clientContext = yield* Layer.build(
+      CodexClient.layerCommand({
+        command: codexSettings.binaryPath,
+        args: ["app-server"],
+        cwd,
+        env: providerProcessEnv(
+          codexSettings.homePath ? { CODEX_HOME: expandHomePath(codexSettings.homePath) } : {},
+        ),
+      }),
+    );
+    const client = yield* Effect.service(CodexClient.CodexAppServerClient).pipe(
+      Effect.provide(clientContext),
+    );
+
+    yield* client.request("initialize", buildCodexInitializeParams());
+    yield* client.notify("initialized", undefined);
+    return yield* operation(client);
+  }).pipe(
+    Effect.scoped,
+    Effect.mapError((error) => mapCodexPluginActionError(error, action)),
+  );
+}
+
+export function readCodexProviderPlugin(
+  input: ServerProviderPluginReadInput & { readonly cwd: string },
+): Effect.Effect<
+  ServerProviderPluginDetail,
+  ServerProviderPluginError,
+  ServerSettingsService | ChildProcessSpawner.ChildProcessSpawner
+> {
+  return withCodexAppServerClient(input.cwd, "read", (client) =>
+    client.request("plugin/read", pluginActionInputParams(input)).pipe(
+      Effect.map((response): ServerProviderPluginDetail => {
+        const plugin = response.plugin;
+        return {
+          summary: parseCodexPluginSummary(
+            {
+              marketplaceName: plugin.marketplaceName,
+              marketplacePath: plugin.marketplacePath,
+              marketplaceDisplayName: plugin.marketplaceName,
+            },
+            plugin.summary,
+          ),
+          marketplaceName: plugin.marketplaceName,
+          marketplacePath: plugin.marketplacePath,
+          apps: parseCodexPluginApps(plugin.apps),
+          mcpServers: compactStringArray(plugin.mcpServers),
+          skills: parseCodexPluginSkills(plugin.skills),
+          ...(compactOptionalString(plugin.description)
+            ? { description: compactOptionalString(plugin.description) }
+            : {}),
+        };
+      }),
+    ),
+  );
+}
+
+export function installCodexProviderPlugin(
+  input: ServerProviderPluginInstallInput & { readonly cwd: string },
+): Effect.Effect<
+  ServerProviderPluginInstallResult,
+  ServerProviderPluginError,
+  ServerSettingsService | ChildProcessSpawner.ChildProcessSpawner
+> {
+  return withCodexAppServerClient(input.cwd, "install", (client) =>
+    client.request("plugin/install", pluginActionInputParams(input)).pipe(
+      Effect.map((response) => ({
+        authPolicy: response.authPolicy,
+        appsNeedingAuth: parseCodexPluginApps(response.appsNeedingAuth),
+      })),
+    ),
+  );
+}
+
+export function uninstallCodexProviderPlugin(
+  input: ServerProviderPluginUninstallInput & { readonly cwd: string },
+): Effect.Effect<
+  ServerProviderPluginUninstallResult,
+  ServerProviderPluginError,
+  ServerSettingsService | ChildProcessSpawner.ChildProcessSpawner
+> {
+  return withCodexAppServerClient(input.cwd, "uninstall", (client) =>
+    client.request("plugin/uninstall", { pluginId: input.pluginId }).pipe(Effect.as({})),
+  );
+}
 
 const emptyCodexModelsFromSettings = (codexSettings: CodexSettings): ServerProvider["models"] =>
   codexSettings.customModels
@@ -331,6 +671,7 @@ const makePendingCodexProvider = (codexSettings: CodexSettings): ServerProvider 
       checkedAt,
       models,
       skills: [],
+      plugins: [],
       probe: {
         installed: false,
         version: null,
@@ -348,6 +689,7 @@ const makePendingCodexProvider = (codexSettings: CodexSettings): ServerProvider 
     checkedAt,
     models,
     skills: [],
+    plugins: [],
     probe: {
       installed: false,
       version: null,
@@ -416,6 +758,7 @@ export const checkCodexProviderStatus = Effect.fn("checkCodexProviderStatus")(fu
       checkedAt,
       models: emptyModels,
       skills: [],
+      plugins: [],
       probe: {
         installed: false,
         version: null,
@@ -443,6 +786,7 @@ export const checkCodexProviderStatus = Effect.fn("checkCodexProviderStatus")(fu
       checkedAt,
       models: emptyModels,
       skills: [],
+      plugins: [],
       probe: {
         installed,
         version: null,
@@ -463,6 +807,7 @@ export const checkCodexProviderStatus = Effect.fn("checkCodexProviderStatus")(fu
       checkedAt,
       models: emptyModels,
       skills: [],
+      plugins: [],
       probe: {
         installed: true,
         version: null,
@@ -483,6 +828,7 @@ export const checkCodexProviderStatus = Effect.fn("checkCodexProviderStatus")(fu
     checkedAt,
     models: snapshot.models,
     skills: snapshot.skills,
+    plugins: snapshot.plugins,
     probe: {
       installed: true,
       version: snapshot.version ?? null,

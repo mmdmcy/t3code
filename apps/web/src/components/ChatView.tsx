@@ -608,6 +608,9 @@ export default function ChatView(props: ChatViewProps) {
   );
   const setStoreThreadError = useStore((store) => store.setError);
   const markThreadVisited = useUiStateStore((store) => store.markThreadVisited);
+  const setSidebarCapabilityPanelView = useUiStateStore(
+    (store) => store.setSidebarCapabilityPanelView,
+  );
   const activeThreadLastVisitedAt = useUiStateStore((store) =>
     routeKind === "server" ? store.threadLastVisitedAtById[routeThreadKey] : undefined,
   );
@@ -2426,6 +2429,13 @@ export default function ChatView(props: ChatViewProps) {
         ? parseStandaloneComposerSlashCommand(trimmed)
         : null;
     if (standaloneSlashCommand) {
+      if (standaloneSlashCommand === "skills" || standaloneSlashCommand === "plugins") {
+        setSidebarCapabilityPanelView(standaloneSlashCommand);
+        promptRef.current = "";
+        clearComposerDraftContent(composerDraftTarget);
+        composerRef.current?.resetCursorState();
+        return;
+      }
       handleInteractionModeChange(standaloneSlashCommand);
       promptRef.current = "";
       clearComposerDraftContent(composerDraftTarget);

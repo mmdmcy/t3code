@@ -1,11 +1,9 @@
 node_modules
 .bun
-.turbo
 .DS_Store
 *.log
 *.tsbuildinfo
 apps/*/dist
-.astro
 packages/*/dist
 .env
 .env.local

@@ -31,7 +31,6 @@ const IGNORED_DIRECTORY_NAMES = new Set([
   ".convex",
   "node_modules",
   ".next",
-  ".turbo",
   "dist",
   "build",
   "out",

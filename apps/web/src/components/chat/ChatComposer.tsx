@@ -49,6 +49,7 @@ import {
   useComposerThreadDraft,
   useEffectiveComposerModelState,
 } from "../../composerDraftStore";
+import { useUiStateStore } from "../../uiStateStore";
 import {
   type TerminalContextDraft,
   type TerminalContextSelection,
@@ -543,6 +544,9 @@ export const ChatComposer = memo(
     const nonPersistedComposerImageIds = composerDraft.nonPersistedImageIds;
 
     const setComposerDraftPrompt = useComposerDraftStore((store) => store.setPrompt);
+    const setSidebarCapabilityPanelView = useUiStateStore(
+      (store) => store.setSidebarCapabilityPanelView,
+    );
     const addComposerDraftImage = useComposerDraftStore((store) => store.addImage);
     const addComposerDraftImages = useComposerDraftStore((store) => store.addImages);
     const removeComposerDraftImage = useComposerDraftStore((store) => store.removeImage);
@@ -747,6 +751,20 @@ export const ChatComposer = memo(
             command: "default",
             label: "/default",
             description: "Switch this thread back to normal build mode",
+          },
+          {
+            id: "slash:skills",
+            type: "slash-command",
+            command: "skills",
+            label: "/skills",
+            description: "Browse provider skills in the sidebar",
+          },
+          {
+            id: "slash:plugins",
+            type: "slash-command",
+            command: "plugins",
+            label: "/plugins",
+            description: "Manage provider plugins in the sidebar",
           },
         ] satisfies ReadonlyArray<Extract<ComposerCommandItem, { type: "slash-command" }>>;
         const providerSlashCommandItems = (selectedProviderStatus?.slashCommands ?? []).map(
@@ -1366,6 +1384,17 @@ export const ChatComposer = memo(
             }
             return;
           }
+          if (item.command === "skills" || item.command === "plugins") {
+            const applied = applyPromptReplacement(trigger.rangeStart, trigger.rangeEnd, "", {
+              expectedText: snapshot.value.slice(trigger.rangeStart, trigger.rangeEnd),
+              focusEditorAfterReplace: false,
+            });
+            if (applied) {
+              setComposerHighlightedItemId(null);
+              setSidebarCapabilityPanelView(item.command);
+            }
+            return;
+          }
           void handleInteractionModeChange(item.command === "plan" ? "plan" : "default");
           const applied = applyPromptReplacement(trigger.rangeStart, trigger.rangeEnd, "", {
             expectedText: snapshot.value.slice(trigger.rangeStart, trigger.rangeEnd),
@@ -1412,7 +1441,12 @@ export const ChatComposer = memo(
           return;
         }
       },
-      [applyPromptReplacement, handleInteractionModeChange, resolveActiveComposerTrigger],
+      [
+        applyPromptReplacement,
+        handleInteractionModeChange,
+        resolveActiveComposerTrigger,
+        setSidebarCapabilityPanelView,
+      ],
     );
 
     const onComposerMenuItemHighlighted = useCallback(

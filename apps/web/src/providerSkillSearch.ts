@@ -70,12 +70,15 @@ export function searchProviderSkills(
   skills: ReadonlyArray<ServerProviderSkill>,
   query: string,
   limit = Number.POSITIVE_INFINITY,
+  options: { includeDisabled?: boolean } = {},
 ): ServerProviderSkill[] {
-  const enabledSkills = skills.filter((skill) => skill.enabled);
+  const searchableSkills = options.includeDisabled
+    ? skills
+    : skills.filter((skill) => skill.enabled);
   const normalizedQuery = normalizeSearchQuery(query, { trimLeadingPattern: /^\$+/ });
 
   if (!normalizedQuery) {
-    return enabledSkills;
+    return [...searchableSkills];
   }
 
   const ranked: Array<{
@@ -84,7 +87,7 @@ export function searchProviderSkills(
     tieBreaker: string;
   }> = [];
 
-  for (const skill of enabledSkills) {
+  for (const skill of searchableSkills) {
     const score = scoreProviderSkill(skill, normalizedQuery);
     if (score === null) {
       continue;

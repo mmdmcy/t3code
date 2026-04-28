@@ -57,3 +57,11 @@ export function resolveThreadRouteTarget(
     draftId: params.draftId as DraftId,
   };
 }
+
+export function shouldRedirectMissingThreadRoute(input: {
+  bootstrapComplete: boolean;
+  hasThreadRef: boolean;
+  routeThreadExists: boolean;
+}): boolean {
+  return input.bootstrapComplete && input.hasThreadRef && !input.routeThreadExists;
+}
